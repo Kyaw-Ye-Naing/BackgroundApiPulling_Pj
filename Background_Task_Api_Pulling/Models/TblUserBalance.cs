@@ -10,5 +10,6 @@ namespace Background_Task_Api_Pulling.Models
         public decimal? UserId { get; set; }
         public int? Inward { get; set; }
         public int? Outward { get; set; }
+        public DateTime? CreatedDate { get; set; }
     }
 }

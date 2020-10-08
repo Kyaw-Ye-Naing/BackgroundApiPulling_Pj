@@ -8517,19 +8517,23 @@
     ]
   },
   "packageFolders": {
-    "C:\\Users\\Kumo\\.nuget\\packages\\": {}
+    "C:\\Users\\Lenovo\\.nuget\\packages\\": {},
+    "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Kumo\\Desktop\\BgTask\\BackgroundApiPulling_Pj\\Background_Task_Api_Pulling\\Background_Task_Api_Pulling.csproj",
+      "projectUniqueName": "C:\\Users\\Lenovo\\Desktop\\Background_Task_Api_Pulling\\BackgroundApiPulling_Pj\\Background_Task_Api_Pulling\\Background_Task_Api_Pulling.csproj",
       "projectName": "Background_Task_Api_Pulling",
-      "projectPath": "C:\\Users\\Kumo\\Desktop\\BgTask\\BackgroundApiPulling_Pj\\Background_Task_Api_Pulling\\Background_Task_Api_Pulling.csproj",
-      "packagesPath": "C:\\Users\\Kumo\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Kumo\\Desktop\\BgTask\\BackgroundApiPulling_Pj\\Background_Task_Api_Pulling\\obj\\",
+      "projectPath": "C:\\Users\\Lenovo\\Desktop\\Background_Task_Api_Pulling\\BackgroundApiPulling_Pj\\Background_Task_Api_Pulling\\Background_Task_Api_Pulling.csproj",
+      "packagesPath": "C:\\Users\\Lenovo\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\Lenovo\\Desktop\\Background_Task_Api_Pulling\\BackgroundApiPulling_Pj\\Background_Task_Api_Pulling\\obj\\",
       "projectStyle": "PackageReference",
+      "fallbackFolders": [
+        "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+      ],
       "configFilePaths": [
-        "C:\\Users\\Kumo\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\Lenovo\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [

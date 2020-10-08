@@ -4,7 +4,6 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
 using Background_Task_Api_Pulling.Models;
 using RestSharp;
-using Hangfire;
 using Newtonsoft.Json;
 
 namespace Background_Task_Api_Pulling.Controllers
@@ -23,10 +22,436 @@ namespace Background_Task_Api_Pulling.Controllers
         public IActionResult Index()
         {
             // RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Hourly);
-            RecurringJob.AddOrUpdate(() => GetData(), Cron.Minutely);
+            // RecurringJob.AddOrUpdate(() => GetData(), Cron.Minutely);
+            // RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Minutely);
+            // RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Minutely);
+            // RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Minutely);
 
 
             return View();
+        }
+
+        // Calculation Myanmar Handicap from home handicap
+        public IActionResult CalculateHomeHandicap()
+        {
+            string bodyResult = "";
+            string goalResult = "";
+            var person = (from p in db.TblPreUpcomingEvent
+                          join e in db.TblHandicap
+                        on p.RapidEventId equals e.RapidEventId
+                          where e.HomeHandicap.Contains("-")
+                          select new
+                          {
+                              ID = p.RapidEventId,
+                              homeHandicap = e.HomeHandicap,
+                              awayHandicap = e.AwayHandicap,
+                              homeOdds = e.HomeOdd,
+                              awayOdds = e.AwayOdd,
+                              homeTeam = p.HomeTeamId,
+                              awayTeam = p.AwayTeamId,
+                              league = p.LeagueId,
+                              goalHandicap = e.GoalHandicap,
+                              goalOverOdds = e.OverOdd,
+                              goalUnderOdds = e.UnderOdd
+                          }).ToList();
+            foreach (var s in person)
+            {
+                TblMyanHandicapResult myanHandicapResult = new TblMyanHandicapResult();
+                
+                //Calculate body handicap
+                var oddsResult = (decimal)(s.homeOdds - s.awayOdds);
+                var intResult = (int)(oddsResult * 100);
+                var unit = Round(intResult);
+                decimal hanDecimal = Decimal.Parse(s.homeHandicap);
+                string hanString = Math.Abs(hanDecimal).ToString();
+                var goalUnit = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(hanString)).First().GoalUnit;
+                var unitAmount = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(hanString)).First().UnitAmount;
+                var unitAmountInt = Convert.ToInt32(unitAmount);
+                int unitAmountResult = unitAmountInt + unit;
+                var positiveNumber = Math.Abs(unitAmountResult);
+
+                if (positiveNumber < 100)
+                {
+                    if (goalUnit == 0)
+                    {
+                        bodyResult = Draw(unitAmountResult);
+
+                    }
+                    else
+                    {
+                        bodyResult = Body(unitAmountResult, (int)goalUnit);
+                    }
+                }
+                else if (positiveNumber == 100)
+                {
+                    if (goalUnit == 0)
+                    {
+                        bodyResult = "=" + "-";
+                    }
+                    else
+                    {
+                        bodyResult = goalUnit.ToString() + "-";
+                    }
+
+                }
+                else
+                {
+                    int newGoalUnit = (int)goalUnit + 1;
+                    int newUnitAmountResult = 200 - positiveNumber;
+                    bodyResult = Body(newUnitAmountResult, newGoalUnit);
+                }
+
+                //Calculate goal handicap
+                var goalsOdds = (decimal)(s.goalOverOdds - s.goalUnderOdds);
+                var goalsOddsInt = (int)(goalsOdds * 100);
+                var goalsUnit = Round(goalsOddsInt);
+                decimal goalsDecimal = Decimal.Parse(s.goalHandicap);
+                string goalsString = Math.Abs(goalsDecimal).ToString();
+                var goals = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(goalsString)).First().GoalUnit;
+                var amount = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(goalsString)).First().UnitAmount;
+                var amountInt = Convert.ToInt32(amount);
+                int amountResult = amountInt + goalsUnit;
+                var positiveAmount = Math.Abs(amountResult);
+
+                if (positiveAmount < 100)
+                {
+                    goalResult = Body(amountResult, (int)goals);
+                }
+                else if (positiveAmount == 100)
+                {
+                    goalResult = goalUnit.ToString() + "-";
+
+                }
+                else
+                {
+                    int newGoals = (int)goalUnit + 1;
+                    int newAmountResult = 200 - positiveAmount;
+                    goalResult = Body(newAmountResult, newGoals);
+                }
+
+                //Save into database
+                var value = db.TblMyanHandicapResult.ToList().Any(a => Convert.ToInt32(a.RapidEventId) == Convert.ToInt32(s.ID));
+                if (value == false)
+                {
+                    //Save if data not exists
+                    myanHandicapResult.Body = bodyResult;
+                    myanHandicapResult.Goal = goalResult;
+                    myanHandicapResult.OverTeamId = s.homeTeam;
+                    myanHandicapResult.UnderTeamId = s.awayTeam;
+                    myanHandicapResult.HomeTeamId = s.homeTeam;
+                    myanHandicapResult.AwayTeamId = s.awayTeam;
+                    myanHandicapResult.LeagueId = s.league;
+                    myanHandicapResult.RapidEventId = s.ID;
+                    db.TblMyanHandicapResult.Add(myanHandicapResult);
+                    db.SaveChanges();
+                }
+                else
+                {
+                    //Update if data exists
+                    var idResult = db.TblMyanHandicapResult.First(a => a.RapidEventId.Equals(s.ID));
+                    idResult.Body = bodyResult;
+                    idResult.Goal = goalResult;
+                    idResult.OverTeamId = s.homeTeam;
+                    idResult.UnderTeamId = s.awayTeam;
+                    idResult.HomeTeamId = s.homeTeam;
+                    idResult.AwayTeamId = s.awayTeam;
+                    idResult.LeagueId = s.league;
+                    idResult.RapidEventId = s.ID;
+                    db.SaveChanges();
+                }
+
+                //Home/CalculateHomeHandicap
+            }
+            return View();
+        }
+
+        // Calculation Myanmar Handicap from away handicap
+        public IActionResult CalculateAwayHandicap()
+        {
+            string bodyResult = "";
+            string goalResult = "";
+            var person = (from p in db.TblPreUpcomingEvent
+                          join e in db.TblHandicap
+                        on p.RapidEventId equals e.RapidEventId
+                          where e.AwayHandicap.Contains("-")
+                          select new
+                          {
+                              ID = p.RapidEventId,
+                              homeHandicap = e.HomeHandicap,
+                              awayHandicap = e.AwayHandicap,
+                              homeOdds = e.HomeOdd,
+                              awayOdds = e.AwayOdd,
+                              homeTeam = p.HomeTeamId,
+                              awayTeam = p.AwayTeamId,
+                              league = p.LeagueId,
+                              goalHandicap = e.GoalHandicap,
+                              goalOverOdds = e.OverOdd,
+                              goalUnderOdds = e.UnderOdd
+                          }).ToList();
+            foreach (var s in person)
+            {
+                TblMyanHandicapResult myanHandicapResult = new TblMyanHandicapResult();
+
+                //Calculate body handicap
+                var oddsResult = (decimal)(s.awayOdds - s.homeOdds);
+                var intResult = (int)(oddsResult * 100);
+                var unit = Round(intResult);
+                decimal hanDecimal = Decimal.Parse(s.awayHandicap);
+                string hanString = Math.Abs(hanDecimal).ToString();
+                var goalUnit = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(hanString)).First().GoalUnit;
+                var unitAmount = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(hanString)).First().UnitAmount;
+                var unitAmountInt = Convert.ToInt32(unitAmount);
+                int unitAmountResult = unitAmountInt + unit;
+                var positiveNumber = Math.Abs(unitAmountResult);
+
+                if (positiveNumber < 100)
+                {
+                    if (goalUnit == 0)
+                    {
+                        bodyResult = Draw(unitAmountResult);
+
+                    }
+                    else
+                    {
+                        bodyResult = Body(unitAmountResult, (int)goalUnit);
+                    }
+                }
+                else if (positiveNumber == 100)
+                {
+                    if (goalUnit == 0)
+                    {
+                        bodyResult = "=" + "-";
+                    }
+                    else
+                    {
+                        bodyResult = goalUnit.ToString() + "-";
+                    }
+
+                }
+                else
+                {
+                    int newGoalUnit = (int)goalUnit + 1;
+                    int newUnitAmountResult = 200 - positiveNumber;
+                    bodyResult = Body(newUnitAmountResult, newGoalUnit);
+                }
+
+                //Calculate goal handicap
+                var goalsOdds = (decimal)(s.goalOverOdds - s.goalUnderOdds);
+                var goalsOddsInt = (int)(goalsOdds * 100);
+                var goalsUnit = Round(goalsOddsInt);
+                decimal goalsDecimal = Decimal.Parse(s.goalHandicap);
+                string goalsString = Math.Abs(goalsDecimal).ToString();
+                var goals = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(goalsString)).First().GoalUnit;
+                var amount = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(goalsString)).First().UnitAmount;
+                var amountInt = Convert.ToInt32(amount);
+                int amountResult = amountInt + goalsUnit;
+                var positiveAmount = Math.Abs(amountResult);
+
+                if (positiveAmount < 100)
+                {
+                    goalResult = Body(amountResult, (int)goals);
+                }
+                else if (positiveAmount == 100)
+                {
+                    goalResult = goalUnit.ToString() + "-";
+
+                }
+                else
+                {
+                    int newGoals = (int)goalUnit + 1;
+                    int newAmountResult = 200 - positiveAmount;
+                    goalResult = Body(newAmountResult, newGoals);
+                }
+
+                //Save into database
+                var value = db.TblMyanHandicapResult.ToList().Any(a => Convert.ToInt32(a.RapidEventId) == Convert.ToInt32(s.ID));
+                if (value == false)
+                {
+                    //Save if data not exists
+                    myanHandicapResult.Body = bodyResult;
+                    myanHandicapResult.Goal = goalResult;
+                    myanHandicapResult.OverTeamId = s.awayTeam;
+                    myanHandicapResult.UnderTeamId = s.homeTeam;
+                    myanHandicapResult.HomeTeamId = s.homeTeam;
+                    myanHandicapResult.AwayTeamId = s.awayTeam;
+                    myanHandicapResult.LeagueId = s.league;
+                    myanHandicapResult.RapidEventId = s.ID;
+                    db.TblMyanHandicapResult.Add(myanHandicapResult);
+                    db.SaveChanges();
+                }
+                else
+                {
+                    //Update if data exists
+                    var idResult = db.TblMyanHandicapResult.First(a => a.RapidEventId.Equals(s.ID));
+                    idResult.Body = bodyResult;
+                    idResult.Goal = goalResult;
+                    idResult.OverTeamId = s.awayTeam;
+                    idResult.UnderTeamId = s.homeTeam;
+                    idResult.HomeTeamId = s.homeTeam;
+                    idResult.AwayTeamId = s.awayTeam;
+                    idResult.LeagueId = s.league;
+                    idResult.RapidEventId = s.ID;
+                    db.SaveChanges();
+                }
+
+                //Home/CalculateAwayHandicap
+            }
+            return View();
+        }
+
+        // Calculation Myanmar Handicap from zero handicap
+        public IActionResult CalculateZeroHandicap()
+        {
+            string bodyResult = "";
+            string goalResult = "";
+            var person = (from p in db.TblPreUpcomingEvent
+                          join e in db.TblHandicap
+                        on p.RapidEventId equals e.RapidEventId
+                          where e.HomeHandicap.Contains("0.0") && e.AwayHandicap.Contains("0.0")
+                          select new
+                          {
+                              ID = p.RapidEventId,
+                              homeHandicap = e.HomeHandicap,
+                              awayHandicap = e.AwayHandicap,
+                              homeOdds = e.HomeOdd,
+                              awayOdds = e.AwayOdd,
+                              homeTeam = p.HomeTeamId,
+                              awayTeam = p.AwayTeamId,
+                              league = p.LeagueId,
+                              goalHandicap = e.GoalHandicap,
+                              goalOverOdds = e.OverOdd,
+                              goalUnderOdds = e.UnderOdd
+                          }).ToList();
+            foreach (var s in person)
+            {
+                TblMyanHandicapResult myanHandicapResult = new TblMyanHandicapResult();
+
+                //Calculate body handicap
+                var oddsResult = (decimal)(s.homeOdds - s.awayOdds);
+                var intResult = (int)(oddsResult * 100);
+                var unit = Round(intResult);
+                decimal hanDecimal = Decimal.Parse(s.homeHandicap);
+                string hanString = Math.Abs(hanDecimal).ToString();
+                var goalUnit = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(hanString)).First().GoalUnit;
+                var unitAmount = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(hanString)).First().UnitAmount;
+                var unitAmountInt = Convert.ToInt32(unitAmount);
+                int unitAmountResult = unitAmountInt + unit;
+                var positiveNumber = Math.Abs(unitAmountResult);
+
+                if (positiveNumber < 100)
+                {
+                        bodyResult = Draw(unitAmountResult);
+                }
+
+                //Calculate goal handicap
+                var goalsOdds = (decimal)(s.goalOverOdds - s.goalUnderOdds);
+                var goalsOddsInt = (int)(goalsOdds * 100);
+                var goalsUnit = Round(goalsOddsInt);
+                decimal goalsDecimal = Decimal.Parse(s.goalHandicap);
+                string goalsString = Math.Abs(goalsDecimal).ToString();
+                var goals = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(goalsString)).First().GoalUnit;
+                var amount = db.TblUnitHandicapFix.Where(a => a.Handicap.Equals(goalsString)).First().UnitAmount;
+                var amountInt = Convert.ToInt32(amount);
+                int amountResult = amountInt + goalsUnit;
+                var positiveAmount = Math.Abs(amountResult);
+
+                if (positiveAmount < 100)
+                {
+                    goalResult = Body(amountResult, (int)goals);
+                }
+                else if (positiveAmount == 100)
+                {
+                    goalResult = goalUnit.ToString() + "-";
+
+                }
+                else
+                {
+                    int newGoals = (int)goalUnit + 1;
+                    int newAmountResult = 200 - positiveAmount;
+                    goalResult = Body(newAmountResult, newGoals);
+                }
+
+                //Save into database
+                var value = db.TblMyanHandicapResult.ToList().Any(a => Convert.ToInt32(a.RapidEventId) == Convert.ToInt32(s.ID));
+                if (value == false)
+                {
+                    //Save if data not exists
+                    myanHandicapResult.Body = bodyResult;
+                    myanHandicapResult.Goal = goalResult;
+                    myanHandicapResult.OverTeamId = s.homeTeam;
+                    myanHandicapResult.UnderTeamId = s.awayTeam;
+                    myanHandicapResult.HomeTeamId = s.homeTeam;
+                    myanHandicapResult.AwayTeamId = s.awayTeam;
+                    myanHandicapResult.LeagueId = s.league;
+                    myanHandicapResult.RapidEventId = s.ID;
+                    db.TblMyanHandicapResult.Add(myanHandicapResult);
+                    db.SaveChanges();
+                }
+                else
+                {
+                    //Update if data exists
+                    var idResult = db.TblMyanHandicapResult.First(a => a.RapidEventId.Equals(s.ID));
+                    idResult.Body = bodyResult;
+                    idResult.Goal = goalResult;
+                    idResult.OverTeamId = s.homeTeam;
+                    idResult.UnderTeamId = s.awayTeam;
+                    idResult.HomeTeamId = s.homeTeam;
+                    idResult.AwayTeamId = s.awayTeam;
+                    idResult.LeagueId = s.league;
+                    idResult.RapidEventId = s.ID;
+                    db.SaveChanges();
+                }
+
+                //Home/CalculateZeroHandicap
+            }
+            return View();
+        }
+
+        //Calculation odds to take the nearest value
+        public int Round(int odds)
+        {
+            int result = 0;
+            int remainder = odds % 10;
+            if (remainder < 5)
+            {
+                result = odds - remainder;
+            }
+            else
+            {
+                int tempValue = 10 - remainder;
+                result = odds + tempValue;
+            }
+            return result;
+        }
+
+        //Concatanation goal and unit as a string body
+        public string Body(int unit, int goal)
+        {
+            string result = "";
+            if (unit.ToString().Length == 3)
+            {
+                result = goal.ToString() + unit.ToString();
+            }
+            else
+            {
+                result = goal.ToString() + "+" + unit.ToString();
+            }
+            return result;
+        }
+
+        //Concatanation unit as a string body
+        public string Draw(int unit)
+        {
+            string result = "";
+            if (unit.ToString().Length == 3)
+            {
+                result = unit.ToString();
+            }
+            else
+            {
+                result = "+" + unit.ToString();
+            }
+            return result;
         }
 
         //Fetch data from goal API(background process)
@@ -45,7 +470,7 @@ namespace Background_Task_Api_Pulling.Controllers
                     var client = new RestClient(eventString);
                     var request = new RestRequest(Method.GET);
                     request.AddHeader("x-rapidapi-host", "bet365-sports-odds.p.rapidapi.com");
-                    request.AddHeader("x-rapidapi-key", "ffafc278d4msh3c49958fb5ea1b8p175067jsn9dae909c7509");
+                    request.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
                     IRestResponse response = client.Execute(request);
                     GoalResult data = JsonConvert.DeserializeObject<GoalResult>(response.Content);
 
@@ -65,8 +490,6 @@ namespace Background_Task_Api_Pulling.Controllers
             }
         }
 
-
-
         //Fetch data from API(background process)
         public void GetData()
         {
@@ -74,7 +497,7 @@ namespace Background_Task_Api_Pulling.Controllers
             var client = new RestClient("https://bet365-sports-odds.p.rapidapi.com/v1/bet365/upcoming?page=1&LNG_ID=1&sport_id=1");
             var request = new RestRequest(Method.GET);
             request.AddHeader("x-rapidapi-host", "bet365-sports-odds.p.rapidapi.com");
-            request.AddHeader("x-rapidapi-key", "ffafc278d4msh3c49958fb5ea1b8p175067jsn9dae909c7509");
+            request.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
             IRestResponse response = client.Execute(request);
             Football data = JsonConvert.DeserializeObject<Football>(response.Content);
 
@@ -96,11 +519,11 @@ namespace Background_Task_Api_Pulling.Controllers
                 var client1 = new RestClient(pageString);
                 var request1 = new RestRequest(Method.GET);
                 request1.AddHeader("x-rapidapi-host", "bet365-sports-odds.p.rapidapi.com");
-                request1.AddHeader("x-rapidapi-key", "ffafc278d4msh3c49958fb5ea1b8p175067jsn9dae909c7509");
+                request1.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
                 IRestResponse response1 = client1.Execute(request1);
                 Football data1 = JsonConvert.DeserializeObject<Football>(response1.Content);
 
-              
+
 
                 for (var ii = 0; ii <= data.results.Length; ii++)
                 {
@@ -111,7 +534,8 @@ namespace Background_Task_Api_Pulling.Controllers
                         var tmpArr = dd.Split(" ");
                         lastName = tmpArr[tmpArr.Count() - 1];
                     }
-                    if (lastName.Equals("play")){
+                    if (lastName.Equals("play"))
+                    {
 
                     }
                     else
@@ -122,7 +546,7 @@ namespace Background_Task_Api_Pulling.Controllers
                         var client2 = new RestClient(resultString);
                         var request2 = new RestRequest(Method.GET);
                         request2.AddHeader("x-rapidapi-host", "bet365-sports-odds.p.rapidapi.com");
-                        request2.AddHeader("x-rapidapi-key", "ffafc278d4msh3c49958fb5ea1b8p175067jsn9dae909c7509");
+                        request2.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
                         IRestResponse response2 = client2.Execute(request2);
                         Odds data2 = JsonConvert.DeserializeObject<Odds>(response2.Content);
                         Handicap data5 = JsonConvert.DeserializeObject<Handicap>(response2.Content);
@@ -193,7 +617,7 @@ namespace Background_Task_Api_Pulling.Controllers
 
                         //----------------------------------------------------------Adding preUpcoming table---------------------------------------------
                         TblPreUpcomingEvent pre = new TblPreUpcomingEvent();
-                        decimal decPre = Decimal.Parse(data2.results[0].event_id);
+                        decimal decPre = Decimal.Parse(data2.results[0].FI);
                         var pre_lgId = db.TblLeague.Where(a => a.LeagueName == league_name).FirstOrDefault().LeagueId;
                         var pre_home = db.TblFootballTeam.Where(a => a.FootballTeam == homeTeam).FirstOrDefault().FootballTeamId;
                         var pre_away = db.TblFootballTeam.Where(a => a.FootballTeam == awayTeam).FirstOrDefault().FootballTeamId;
@@ -272,15 +696,28 @@ namespace Background_Task_Api_Pulling.Controllers
 
                         //--------------------------------------------------------Adding handicap table--------------------------------------------------
                         TblHandicap hd = new TblHandicap();
-                        decimal decHd = Decimal.Parse(data2.results[0].event_id);
+                        decimal decHd = Decimal.Parse(data2.results[0].FI);
                         decimal dec_home_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[0].odds);
                         decimal dec_away_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[1].odds);
-                        String value = data2.results[0].asian_lines.sp.asian_handicap.odds[0].name;
-                        String value_h = data2.results[0].asian_lines.sp.asian_handicap.odds[1].name;
-                        if(value ==null && value_h == null)
+                        decimal dec_overOdds = Decimal.Parse(data2.results[0].asian_lines.sp.goal_line.odds[0].odds);
+                        decimal dec_underOdds = Decimal.Parse(data2.results[0].asian_lines.sp.goal_line.odds[1].odds);
+                        var value = data2.results[0].asian_lines.sp.asian_handicap.odds[0].name;
+                        var value_h = data2.results[0].asian_lines.sp.asian_handicap.odds[1].name;
+                        var goalsHandicap = data2.results[0].asian_lines.sp.goal_line.odds[0].name;
+                        //Check class name of api whether it is name or handicap
+                        if (value == null && value_h == null)
                         {
-                            value= data5.results[0].asian_lines.sp.asian_handicap.odds[0].handicap;
-                            value_h = data5.results[0].asian_lines.sp.asian_handicap.odds[1].handicap;
+                            value_h = data5.results[0].asian_lines.sp.asian_handicap.odds[0].handicap;
+                            value = data5.results[0].asian_lines.sp.asian_handicap.odds[1].handicap;
+                        }
+                        if (goalsHandicap == null)
+                        {
+                            goalsHandicap = data2.results[0].asian_lines.sp.goal_line.odds[0].handicap;
+                        }
+                       
+                        if (goalsHandicap.Length > 4) {
+                            var newGoalsHandicap = goalsHandicap.Split(",");
+                            goalsHandicap = newGoalsHandicap[1];
                         }
                         //Filter eventId
                         var hanValue = db.TblHandicap.ToList().Any(a => a.RapidEventId == decHd);
@@ -289,130 +726,92 @@ namespace Background_Task_Api_Pulling.Controllers
                             //Update if data exist 
                             var id = db.TblHandicap.Where(a => a.RapidEventId == decHd).FirstOrDefault().HandicapId;
                             var handicap = db.TblHandicap.FirstOrDefault(s => s.HandicapId.Equals(id));
-                            if (value.Length <= 4 && value_h.Length <= 4)
+                            if (value.Length <= 5 && value_h.Length <= 5)
                             {
-                                //Not cut string if there is only one handicap
+
                                 handicap.RapidEventId = decHd;
                                 handicap.HomeOdd = dec_home_odds;
-                                handicap.HomeHandicap = Decimal.Parse(value_h);
+                                handicap.HomeHandicap = value_h;
                                 handicap.AwayOdd = dec_away_odds;
-                                handicap.AwayHandicap = Decimal.Parse(value);
+                                handicap.AwayHandicap = value;
+                                handicap.OverOdd = dec_overOdds;
+                                handicap.UnderOdd = dec_underOdds;
+                                handicap.GoalHandicap = goalsHandicap;
                                 handicap.EventDatetime = dtDateTime;
                                 db.SaveChanges();
                             }
                             else
                             {
-                                //Cut string if there are two handicaps
-                                var tmpArr = value.Split(",");
-                                var tmpArr_h = value_h.Split(",");
+                                var cutHandicap = value.Split(",");
+                                var cutHandicap_h = value_h.Split(",");
                                 handicap.RapidEventId = decHd;
                                 handicap.HomeOdd = dec_home_odds;
-                                handicap.HomeHandicap = Decimal.Parse(tmpArr_h[0]);
+                                handicap.HomeHandicap = cutHandicap_h[0];
                                 handicap.AwayOdd = dec_away_odds;
-                                handicap.AwayHandicap = Decimal.Parse(tmpArr[0]);
+                                handicap.AwayHandicap = cutHandicap[1];
                                 handicap.EventDatetime = dtDateTime;
                                 db.SaveChanges();
                             }
-
-
 
                         }
                         else
                         {
                             //Insert if data not exist
-                            if (value.Length <= 4 && value_h.Length <= 4)
+                            if (value.Length <= 5 && value_h.Length <= 5)
                             {
-                                //Not cut string if there is only one handicap
                                 hd.RapidEventId = decHd;
                                 hd.HomeOdd = dec_home_odds;
-                                hd.HomeHandicap = Decimal.Parse(value_h);
+                                hd.HomeHandicap = value_h;
                                 hd.AwayOdd = dec_away_odds;
-                                hd.AwayHandicap = Decimal.Parse(value);
+                                hd.AwayHandicap = value;
                                 hd.EventDatetime = dtDateTime;
                                 db.TblHandicap.Add(hd);
                                 db.SaveChanges();
                             }
                             else
                             {
-                                //Cut string if there is two handicaps
-                                var tmpArr = value.Split(",");
-                                var tmpArr_h = value_h.Split(",");
-                                //var str_h = value_h.Remove(0, 4);
+                                var cutHandicap = value.Split(",");
+                                var cutHandicap_h = value_h.Split(",");
                                 hd.RapidEventId = decHd;
                                 hd.HomeOdd = dec_home_odds;
-                                hd.HomeHandicap = Decimal.Parse(tmpArr_h[0]);
+                                hd.HomeHandicap = cutHandicap_h[0];
                                 hd.AwayOdd = dec_away_odds;
-                                hd.AwayHandicap = Decimal.Parse(tmpArr[0]);
+                                hd.AwayHandicap = cutHandicap[1];
                                 hd.EventDatetime = dtDateTime;
                                 db.TblHandicap.Add(hd);
                                 db.SaveChanges();
                             }
+
                         }
-                   
+
                     }
                     Console.WriteLine("Completed Data" + ii + "Result");
 
                 }
                 Console.WriteLine("Completed Page" + page + "Result");
             }
-           
+
         }
 
-        public void Gettttt()
+        public IActionResult Get()
         {
-            TblHandicap hd = new TblHandicap();
-            // decimal decHd = Decimal.Parse(data2.results[0].event_id);
-            // decimal dec_home_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[0].odds);
-            //  decimal dec_away_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[1].odds);
-            // String value = data2.results[0].asian_lines.sp.asian_handicap.odds[0].name;
-            //  String value_h = data2.results[0].asian_lines.sp.asian_handicap.odds[1].name;
-            //if (value == null && value_h == null)
-            //  {
-            //     value = data5.results[0].asian_lines.sp.asian_handicap.odds[0].handicap;
-            //     value_h = data5.results[0].asian_lines.sp.asian_handicap.odds[1].handicap;
-            // }
-            //Filter eventId
-            // var hanValue = db.TblHandicap.ToList().Any(a => a.RapidEventId == decHd);
-            //  if (hanValue == true)
-            //   {
-            //Update if data exist 
-            // var id = db.TblHandicap.Where(a => a.RapidEventId == decHd).FirstOrDefault().HandicapId;
-            //var handicap = db.TblHandicap.FirstOrDefault(s => s.HandicapId.Equals(id));
-            var value = "+0.5,-2.4";
-            var value_h = "+0.5,-4.6";
-            if (value.Length <= 4 && value_h.Length <= 4)
-                {
-                    //Not cut string if there is only one handicap
-                   // handicap.RapidEventId = decHd;
-                    // handicap.HomeOdd = dec_home_odds;
-                  //  handicap.HomeHandicap = Decimal.Parse(value_h);
-                   /// handicap.AwayOdd = dec_away_odds;
-                   // handicap.AwayHandicap = Decimal.Parse(value);
-                  ///  handicap.EventDatetime = dtDateTime;
-                  //  db.SaveChanges();
-                }
-                else
-                {
-                //Cut string if there is two handicaps
-                var tmpArr = value.Split(",");
-                var aa = tmpArr[0];
-                var bb = tmpArr[1];
-                var str = value.Remove(0, 4);
-                   // var str_h = value_h.Remove(0, 4);
-                 //   handicap.RapidEventId = decHd;
-                    //   handicap.HomeOdd = dec_home_odds;
-                  //  handicap.HomeHandicap = Decimal.Parse(str_h);
-                  ///  handicap.AwayOdd = dec_away_odds;
-//handicap.AwayHandicap = Decimal.Parse(str);
-                  //  handicap.EventDatetime = dtDateTime;
-                    db.SaveChanges();
-                }
 
+            decimal dec_overOdds = Decimal.Parse("1.85");
+            decimal dec_underOdds = Decimal.Parse("2.00");
+            var goalsHandicap ="null";
+            //Check class name of api whether it is name or handicap
 
-
+            if (goalsHandicap.Length > 4)
+            {
+                var newGoalsHandicap = goalsHandicap.Split(",");
+                goalsHandicap = newGoalsHandicap[1];
             }
-           
-            
+            var dd = goalsHandicap;
+
+            return View();
+        }
+
+
 
     }
 }

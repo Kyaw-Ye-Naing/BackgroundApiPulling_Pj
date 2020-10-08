@@ -57,6 +57,7 @@ namespace Background_Task_Api_Pulling.Models
 
     public class Odd1
     {
+        public string handicap { get; set; }
         public string name { get; set; }
         public string odds { get; set; }
         public string header { get; set; }
