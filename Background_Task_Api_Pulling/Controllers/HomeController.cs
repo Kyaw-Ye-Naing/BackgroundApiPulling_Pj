@@ -644,20 +644,6 @@ namespace Background_Task_Api_Pulling.Controllers
                             preUpcoming.EventTime = DateTime.Parse(shorttime);
                             db.SaveChanges();
                         }
-                        else
-                        {
-                            //Insert if data not exist
-                            pre.RapidEventId = decPre;
-                            pre.LeagueId = pre_lgId;
-                            pre.HomeTeamId = pre_home;
-                            pre.AwayTeamId = pre_away;
-                            pre.EventDate = DateTime.Parse(shortdate);
-                            pre.EventTime = DateTime.Parse(shorttime);
-                            db.TblPreUpcomingEvent.Add(pre);
-                            db.SaveChanges();
-                        }
-
-
                         //------------------------------------------------------Adding upcomingevent table-----------------------------------------------
                         TblUpcomingEvent up = new TblUpcomingEvent();
                         decimal decUp = Decimal.Parse(data1.results[ii].id);
@@ -811,6 +797,23 @@ namespace Background_Task_Api_Pulling.Controllers
             return View();
         }
 
+        public void UpdatePre()
+        {
+            //var preValue = db.TblPreUpcomingEvent.ToList().Any(a => a.RapidEventId == decPre);
+            //if (preValue == true)
+            //{
+            //    //Update if data exist 
+            //   var id = db.TblPreUpcomingEvent.Where(a => a.RapidEventId == decPre).FirstOrDefault().PreUpcommingEventId;
+            //    var preUpcoming = db.TblPreUpcomingEvent.FirstOrDefault(s => s.PreUpcommingEventId.Equals(id));
+            //    preUpcoming.RapidEventId = decPre;
+            //    preUpcoming.LeagueId = pre_lgId;
+            //    preUpcoming.HomeTeamId = pre_home;
+            //    preUpcoming.AwayTeamId = pre_away;
+            //    preUpcoming.EventDate = DateTime.Parse(shortdate);
+            //    preUpcoming.EventTime = DateTime.Parse(shorttime);
+            //    db.SaveChanges();
+            //}
+        }
 
 
     }
