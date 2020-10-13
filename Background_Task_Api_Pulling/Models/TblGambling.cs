@@ -13,5 +13,6 @@ namespace Background_Task_Api_Pulling.Models
         public int? TeamCount { get; set; }
         public int? Amount { get; set; }
         public bool? Active { get; set; }
+        public decimal? UserId { get; set; }
     }
 }

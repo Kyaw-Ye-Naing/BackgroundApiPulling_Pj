@@ -14,18 +14,6 @@ namespace Background_Task_Api_Pulling.Models
         public decimal? SharePercent { get; set; }
         public decimal? BetLimitForMix { get; set; }
         public decimal? BetLimitForSingle { get; set; }
-        public decimal? SingleBetCommission5 { get; set; }
-        public decimal? SingleBetCommission8 { get; set; }
-        public decimal? MixBetCommission2count15 { get; set; }
-        public decimal? MixBetCommission3count20 { get; set; }
-        public decimal? MixBetCommission4count20 { get; set; }
-        public decimal? MixBetCommission5count20 { get; set; }
-        public decimal? MixBetCommission6count20 { get; set; }
-        public decimal? MixBetCommission7count20 { get; set; }
-        public decimal? MixBetCommission8count20 { get; set; }
-        public decimal? MixBetCommission9count25 { get; set; }
-        public decimal? MixBetCommission10count25 { get; set; }
-        public decimal? MixBetCommission11count25 { get; set; }
         public decimal? CreatedBy { get; set; }
         public DateTime? CreatedDate { get; set; }
     }

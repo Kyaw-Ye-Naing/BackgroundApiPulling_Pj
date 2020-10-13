@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Background_Task_Api_Pulling.Models;
 using RestSharp;
 using Newtonsoft.Json;
+using Hangfire;
 
 namespace Background_Task_Api_Pulling.Controllers
 {
@@ -21,13 +22,11 @@ namespace Background_Task_Api_Pulling.Controllers
 
         public IActionResult Index()
         {
-            // RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Hourly);
-            // RecurringJob.AddOrUpdate(() => GetData(), Cron.Minutely);
-            // RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Minutely);
-            // RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Minutely);
-            // RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Minutely);
-
-
+            RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Hourly);
+            RecurringJob.AddOrUpdate(() => GetData(), Cron.Hourly);
+            RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Hourly);
+            RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Hourly);
+            RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Hourly);
             return View();
         }
 
@@ -779,41 +778,24 @@ namespace Background_Task_Api_Pulling.Controllers
 
         }
 
-        public IActionResult Get()
+        public IActionResult Test()
         {
 
-            decimal dec_overOdds = Decimal.Parse("1.85");
-            decimal dec_underOdds = Decimal.Parse("2.00");
-            var goalsHandicap ="null";
-            //Check class name of api whether it is name or handicap
+            //decimal dec_overOdds = Decimal.Parse("1.85");
+            //decimal dec_underOdds = Decimal.Parse("2.00");
+            //var goalsHandicap ="null";
+            ////Check class name of api whether it is name or handicap
 
-            if (goalsHandicap.Length > 4)
-            {
-                var newGoalsHandicap = goalsHandicap.Split(",");
-                goalsHandicap = newGoalsHandicap[1];
-            }
-            var dd = goalsHandicap;
+            //if (goalsHandicap.Length > 4)
+            //{
+            //    var newGoalsHandicap = goalsHandicap.Split(",");
+            //    goalsHandicap = newGoalsHandicap[1];
+            //}
+            //var dd = goalsHandicap;
 
             return View();
         }
 
-        public void UpdatePre()
-        {
-            //var preValue = db.TblPreUpcomingEvent.ToList().Any(a => a.RapidEventId == decPre);
-            //if (preValue == true)
-            //{
-            //    //Update if data exist 
-            //   var id = db.TblPreUpcomingEvent.Where(a => a.RapidEventId == decPre).FirstOrDefault().PreUpcommingEventId;
-            //    var preUpcoming = db.TblPreUpcomingEvent.FirstOrDefault(s => s.PreUpcommingEventId.Equals(id));
-            //    preUpcoming.RapidEventId = decPre;
-            //    preUpcoming.LeagueId = pre_lgId;
-            //    preUpcoming.HomeTeamId = pre_home;
-            //    preUpcoming.AwayTeamId = pre_away;
-            //    preUpcoming.EventDate = DateTime.Parse(shortdate);
-            //    preUpcoming.EventTime = DateTime.Parse(shorttime);
-            //    db.SaveChanges();
-            //}
-        }
 
 
     }

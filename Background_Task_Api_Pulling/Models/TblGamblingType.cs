@@ -7,5 +7,7 @@ namespace Background_Task_Api_Pulling.Models
     {
         public int GamblingTypeId { get; set; }
         public string GamblingType { get; set; }
+        public int? MinBetAmount { get; set; }
+        public int? MaxBetAmount { get; set; }
     }
 }
