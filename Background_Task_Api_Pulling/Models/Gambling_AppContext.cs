@@ -276,6 +276,14 @@ namespace Background_Task_Api_Pulling.Models
 
                 entity.Property(e => e.AwayResult).HasColumnName("awayResult");
 
+                entity.Property(e => e.EventDate)
+                    .HasColumnName("eventDate")
+                    .HasColumnType("date");
+
+                entity.Property(e => e.EventDatetime)
+                    .HasColumnName("eventDatetime")
+                    .HasColumnType("datetime");
+
                 entity.Property(e => e.HomeResult).HasColumnName("homeResult");
 
                 entity.Property(e => e.RapidEventId)

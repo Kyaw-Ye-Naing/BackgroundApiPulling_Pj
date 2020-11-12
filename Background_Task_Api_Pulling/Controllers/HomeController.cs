@@ -22,13 +22,15 @@ namespace Background_Task_Api_Pulling.Controllers
 
         public IActionResult Index()
         {
-            RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Hourly);
-            RecurringJob.AddOrUpdate(() => GetData(), Cron.Hourly);
-            RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Hourly);
-            RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Hourly);
-            RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Hourly);
+            //RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Hourly);
+           // RecurringJob.AddOrUpdate(() => GetData(),Cron.Minutely);
+          //  RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Hourly);
+          //  RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Hourly);
+          //  RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Hourly);
             return View();
         }
+
+        //----------------------------------------Main Background Methods------------------------ 
 
         // Calculation Myanmar Handicap from home handicap
         public IActionResult CalculateHomeHandicap()
@@ -406,53 +408,6 @@ namespace Background_Task_Api_Pulling.Controllers
             return View();
         }
 
-        //Calculation odds to take the nearest value
-        public int Round(int odds)
-        {
-            int result = 0;
-            int remainder = odds % 10;
-            if (remainder < 5)
-            {
-                result = odds - remainder;
-            }
-            else
-            {
-                int tempValue = 10 - remainder;
-                result = odds + tempValue;
-            }
-            return result;
-        }
-
-        //Concatanation goal and unit as a string body
-        public string Body(int unit, int goal)
-        {
-            string result = "";
-            if (unit.ToString().Length == 3)
-            {
-                result = goal.ToString() + unit.ToString();
-            }
-            else
-            {
-                result = goal.ToString() + "+" + unit.ToString();
-            }
-            return result;
-        }
-
-        //Concatanation unit as a string body
-        public string Draw(int unit)
-        {
-            string result = "";
-            if (unit.ToString().Length == 3)
-            {
-                result = unit.ToString();
-            }
-            else
-            {
-                result = "+" + unit.ToString();
-            }
-            return result;
-        }
-
         //Fetch data from goal API(background process)
         public void GetGoals()
         {
@@ -475,28 +430,33 @@ namespace Background_Task_Api_Pulling.Controllers
 
                     //Add data into goal result table
                     TblGoalResult goalResult = new TblGoalResult();
+                    DateTime dt = DateTime.Now;
                     var golArr = data.results[0].ss.Split("-");
                     goalResult.RapidEventId = c.ToString();
                     goalResult.HomeResult = Convert.ToInt32(golArr[0]);
                     goalResult.AwayResult = Convert.ToInt32(golArr[1]);
+                    goalResult.EventDate = dt.Date;
+                    goalResult.EventDatetime = dt;
                     db.TblGoalResult.Add(goalResult);
                     db.SaveChanges();
+
+
                 }
                 else
                 {
                     //Record Existing
                 }
-            }
+            }//end of foreach loop
         }
 
         //Fetch data from API(background process)
         public void GetData()
         {
             //Calling data from RapidApI 
-            var client = new RestClient("https://bet365-sports-odds.p.rapidapi.com/v1/bet365/upcoming?page=1&LNG_ID=1&sport_id=1");
+            var client = new RestClient("https://betsapi2.p.rapidapi.com/v1/bet365/upcoming?sport_id=1");
             var request = new RestRequest(Method.GET);
-            request.AddHeader("x-rapidapi-host", "bet365-sports-odds.p.rapidapi.com");
             request.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
+            request.AddHeader("x-rapidapi-host", "betsapi2.p.rapidapi.com");
             IRestResponse response = client.Execute(request);
             Football data = JsonConvert.DeserializeObject<Football>(response.Content);
 
@@ -514,11 +474,11 @@ namespace Background_Task_Api_Pulling.Controllers
             for (var page = 1; page <= data_page; page++)
             {
                 //Calling event data from RapidApI 
-                var pageString = String.Concat("https://bet365-sports-odds.p.rapidapi.com/v1/bet365/upcoming?page=", page, "&LNG_ID=1&sport_id=1");
+                var pageString = String.Concat("https://betsapi2.p.rapidapi.com/v1/bet365/upcoming?sport_id=1&page=", page);
                 var client1 = new RestClient(pageString);
                 var request1 = new RestRequest(Method.GET);
-                request1.AddHeader("x-rapidapi-host", "bet365-sports-odds.p.rapidapi.com");
                 request1.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
+                request1.AddHeader("x-rapidapi-host", "betsapi2.p.rapidapi.com");
                 IRestResponse response1 = client1.Execute(request1);
                 Football data1 = JsonConvert.DeserializeObject<Football>(response1.Content);
 
@@ -535,20 +495,22 @@ namespace Background_Task_Api_Pulling.Controllers
                     }
                     if (lastName.Equals("play"))
                     {
-
+                        Console.WriteLine("This is Esports data");
                     }
                     else
                     {
                         //Fetch  Odds data from RapidApI 
                         eventId = data1.results[ii].id;
-                        var resultString = String.Concat("https://bet365-sports-odds.p.rapidapi.com/v3/bet365/prematch?FI=", eventId);
+                        var resultString = String.Concat("https://betsapi2.p.rapidapi.com/v3/bet365/prematch?FI=", eventId);
                         var client2 = new RestClient(resultString);
                         var request2 = new RestRequest(Method.GET);
-                        request2.AddHeader("x-rapidapi-host", "bet365-sports-odds.p.rapidapi.com");
                         request2.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
+                        request2.AddHeader("x-rapidapi-host", "betsapi2.p.rapidapi.com");
                         IRestResponse response2 = client2.Execute(request2);
                         Odds data2 = JsonConvert.DeserializeObject<Odds>(response2.Content);
                         Handicap data5 = JsonConvert.DeserializeObject<Handicap>(response2.Content);
+                        //FROdds data8 = JsonConvert.DeserializeObject<FROdds>(response2.Content);
+                        //FRHandicap data9 = JsonConvert.DeserializeObject<FRHandicap>(response2.Content);
 
                         //------------------------------------------------------------Adding into leageue table--------------------------------------------
                         TblLeague lg = new TblLeague();
@@ -681,93 +643,113 @@ namespace Background_Task_Api_Pulling.Controllers
 
                         //--------------------------------------------------------Adding handicap table--------------------------------------------------
                         TblHandicap hd = new TblHandicap();
-                        decimal decHd = Decimal.Parse(data2.results[0].FI);
-                        decimal dec_home_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[0].odds);
-                        decimal dec_away_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[1].odds);
-                        decimal dec_overOdds = Decimal.Parse(data2.results[0].asian_lines.sp.goal_line.odds[0].odds);
-                        decimal dec_underOdds = Decimal.Parse(data2.results[0].asian_lines.sp.goal_line.odds[1].odds);
-                        var value = data2.results[0].asian_lines.sp.asian_handicap.odds[0].name;
-                        var value_h = data2.results[0].asian_lines.sp.asian_handicap.odds[1].name;
-                        var goalsHandicap = data2.results[0].asian_lines.sp.goal_line.odds[0].name;
-                        //Check class name of api whether it is name or handicap
-                        if (value == null && value_h == null)
+                        decimal dec_overOdds = 0;
+                        decimal dec_underOdds = 0;
+                        string goalsHandicap = "0";
+                        if (data2.results[0].asian_lines != null)
                         {
-                            value_h = data5.results[0].asian_lines.sp.asian_handicap.odds[0].handicap;
-                            value = data5.results[0].asian_lines.sp.asian_handicap.odds[1].handicap;
-                        }
-                        if (goalsHandicap == null)
-                        {
-                            goalsHandicap = data2.results[0].asian_lines.sp.goal_line.odds[0].handicap;
-                        }
-                       
-                        if (goalsHandicap.Length > 4) {
-                            var newGoalsHandicap = goalsHandicap.Split(",");
-                            goalsHandicap = newGoalsHandicap[1];
-                        }
-                        //Filter eventId
-                        var hanValue = db.TblHandicap.ToList().Any(a => a.RapidEventId == decHd);
-                        if (hanValue == true)
-                        {
-                            //Update if data exist 
-                            var id = db.TblHandicap.Where(a => a.RapidEventId == decHd).FirstOrDefault().HandicapId;
-                            var handicap = db.TblHandicap.FirstOrDefault(s => s.HandicapId.Equals(id));
-                            if (value.Length <= 5 && value_h.Length <= 5)
+                            decimal decHd = Decimal.Parse(data2.results[0].FI);
+                            decimal dec_home_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[0].odds);
+                            decimal dec_away_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[1].odds);
+                            if (data2.results[0].asian_lines.sp.goal_line != null)
                             {
+                                dec_overOdds = Decimal.Parse(data2.results[0].asian_lines.sp.goal_line.odds[0].odds);
+                                dec_underOdds = Decimal.Parse(data2.results[0].asian_lines.sp.goal_line.odds[1].odds);
+                                goalsHandicap = data2.results[0].asian_lines.sp.goal_line.odds[0].name;
+                            }
+                            var value_h = data2.results[0].asian_lines.sp.asian_handicap.odds[0].name;
+                            var value = data2.results[0].asian_lines.sp.asian_handicap.odds[1].name;
+                            //Check class name of api whether it is name or handicap
+                            if (value == null && value_h == null)
+                            {
+                                value_h = data5.results[0].asian_lines.sp.asian_handicap.odds[0].handicap;
+                                value = data5.results[0].asian_lines.sp.asian_handicap.odds[1].handicap;
+                            }
+                            if (goalsHandicap == null)
+                            {
+                                goalsHandicap = data2.results[0].asian_lines.sp.goal_line.odds[0].handicap;
+                            }
 
-                                handicap.RapidEventId = decHd;
-                                handicap.HomeOdd = dec_home_odds;
-                                handicap.HomeHandicap = value_h;
-                                handicap.AwayOdd = dec_away_odds;
-                                handicap.AwayHandicap = value;
-                                handicap.OverOdd = dec_overOdds;
-                                handicap.UnderOdd = dec_underOdds;
-                                handicap.GoalHandicap = goalsHandicap;
-                                handicap.EventDatetime = dtDateTime;
-                                db.SaveChanges();
+                            if (goalsHandicap.Length > 4)
+                            {
+                                var newGoalsHandicap = goalsHandicap.Split(",");
+                                goalsHandicap = newGoalsHandicap[1];
+                            }
+                            //Filter eventId
+                            var hanValue = db.TblHandicap.ToList().Any(a => a.RapidEventId == decHd);
+                            if (hanValue == true)
+                            {
+                                //Update if data exist 
+                                var id = db.TblHandicap.Where(a => a.RapidEventId == decHd).FirstOrDefault().HandicapId;
+                                var handicap = db.TblHandicap.FirstOrDefault(s => s.HandicapId.Equals(id));
+                                if (value.Length <= 5 && value_h.Length <= 5)
+                                {
+
+                                    handicap.RapidEventId = decHd;
+                                    handicap.HomeOdd = dec_home_odds;
+                                    handicap.HomeHandicap = value_h;
+                                    handicap.AwayOdd = dec_away_odds;
+                                    handicap.AwayHandicap = value;
+                                    handicap.OverOdd = dec_overOdds;
+                                    handicap.UnderOdd = dec_underOdds;
+                                    handicap.GoalHandicap = goalsHandicap;
+                                    handicap.EventDatetime = dtDateTime;
+                                    db.SaveChanges();
+                                }
+                                else
+                                {
+                                    var cutHandicap = value.Split(",");
+                                    var cutHandicap_h = value_h.Split(",");
+                                    handicap.RapidEventId = decHd;
+                                    handicap.HomeOdd = dec_home_odds;
+                                    handicap.HomeHandicap = cutHandicap_h[0];
+                                    handicap.AwayOdd = dec_away_odds;
+                                    handicap.AwayHandicap = cutHandicap[0];
+                                    handicap.OverOdd = dec_overOdds;
+                                    handicap.UnderOdd = dec_underOdds;
+                                    handicap.GoalHandicap = goalsHandicap;
+                                    handicap.EventDatetime = dtDateTime;
+                                    db.SaveChanges();
+                                }
+
                             }
                             else
                             {
-                                var cutHandicap = value.Split(",");
-                                var cutHandicap_h = value_h.Split(",");
-                                handicap.RapidEventId = decHd;
-                                handicap.HomeOdd = dec_home_odds;
-                                handicap.HomeHandicap = cutHandicap_h[0];
-                                handicap.AwayOdd = dec_away_odds;
-                                handicap.AwayHandicap = cutHandicap[1];
-                                handicap.EventDatetime = dtDateTime;
-                                db.SaveChanges();
-                            }
+                                //Insert if data not exist
+                                if (value.Length <= 5 && value_h.Length <= 5)
+                                {
+                                    hd.RapidEventId = decHd;
+                                    hd.HomeOdd = dec_home_odds;
+                                    hd.HomeHandicap = value_h;
+                                    hd.AwayOdd = dec_away_odds;
+                                    hd.AwayHandicap = value;
+                                    hd.EventDatetime = dtDateTime;
+                                    hd.OverOdd = dec_overOdds;
+                                    hd.UnderOdd = dec_underOdds;
+                                    hd.GoalHandicap = goalsHandicap;
+                                    db.TblHandicap.Add(hd);
+                                    db.SaveChanges();
+                                }
+                                else
+                                {
+                                    var cutHandicap = value.Split(",");
+                                    var cutHandicap_h = value_h.Split(",");
+                                    hd.RapidEventId = decHd;
+                                    hd.HomeOdd = dec_home_odds;
+                                    hd.HomeHandicap = cutHandicap_h[0];
+                                    hd.AwayOdd = dec_away_odds;
+                                    hd.AwayHandicap = cutHandicap[0];
+                                    hd.EventDatetime = dtDateTime;
+                                    hd.OverOdd = dec_overOdds;
+                                    hd.UnderOdd = dec_underOdds;
+                                    hd.GoalHandicap = goalsHandicap;
+                                    db.TblHandicap.Add(hd);
+                                    db.SaveChanges();
+                                }
 
+                            }
                         }
-                        else
-                        {
-                            //Insert if data not exist
-                            if (value.Length <= 5 && value_h.Length <= 5)
-                            {
-                                hd.RapidEventId = decHd;
-                                hd.HomeOdd = dec_home_odds;
-                                hd.HomeHandicap = value_h;
-                                hd.AwayOdd = dec_away_odds;
-                                hd.AwayHandicap = value;
-                                hd.EventDatetime = dtDateTime;
-                                db.TblHandicap.Add(hd);
-                                db.SaveChanges();
-                            }
-                            else
-                            {
-                                var cutHandicap = value.Split(",");
-                                var cutHandicap_h = value_h.Split(",");
-                                hd.RapidEventId = decHd;
-                                hd.HomeOdd = dec_home_odds;
-                                hd.HomeHandicap = cutHandicap_h[0];
-                                hd.AwayOdd = dec_away_odds;
-                                hd.AwayHandicap = cutHandicap[1];
-                                hd.EventDatetime = dtDateTime;
-                                db.TblHandicap.Add(hd);
-                                db.SaveChanges();
-                            }
 
-                        }
 
                     }
                     Console.WriteLine("Completed Data" + ii + "Result");
@@ -780,23 +762,354 @@ namespace Background_Task_Api_Pulling.Controllers
 
         public IActionResult Test()
         {
+            int goalUnitInt = 0;
+            decimal unit = 0;
+            decimal totalAmount = 0;
+            var betting = (from g in db.TblGambling
+                           join d in db.TblGamblingDetails
+                           on g.GamblingId equals d.GamblingId
+                           where g.RapidEventId == 1000
+                           select new
+                           {
+                               betType = g.GamblingTypeId,
+                               betTeamCount = g.TeamCount,
+                               betTeam = d.FootballTeamId,
+                               betOver = d.Overs,
+                               betUnder = d.Under,
+                               betAmount = g.Amount,
+                               betBody = d.BodyOdd,
+                               betGoal = d.GoalOdd,
+                               betUser=g.UserId
+                           }).ToList();
+            foreach (var item in betting)
+            {
+                var diff = 0;
+                //Check betting is body or maung handicap
+                if (item.betType == 1)
+                {
+                    var commission = db.TblUserCommission.Where(a => a.UserId == item.betUser && a.UserCommissionTypeId == 1).FirstOrDefault().SubUserCommission;
+                    //Check betting is body or goal handicap
+                    //----For body betting-----
+                    if (item.betTeam != 0)
+                    {
+                       
+                        int[] body = CutBodyHandicap(item.betBody);
+                        goalUnitInt = body[0];
+                        unit = body[1];
+                        var tempOver= db.TblMyanHandicapResult.ToList().Any(a => a.OverTeamId == item.betTeam && a.RapidEventId==1000);
+                       // var tempUnder = db.TblMyanHandicapResult.ToList().Any(a => a.UnderTeamId == item.betTeam && a.RapidEventId == 1000);
+                        var tempHome = db.TblMyanHandicapResult.ToList().Any(a => a.HomeTeamId == item.betTeam && a.RapidEventId == 1000);
+                        //var tempAway = db.TblMyanHandicapResult.ToList().Any(a => a.AwayTeamId == item.betTeam && a.RapidEventId == 1000);
+                        //----Check bet team is over----
+                        if (tempOver == true)
+                        {
+                            if (tempHome == true)
+                            {
+                                //HomeGoal - AwayGoal
+                                diff = 0 - 0;
+                                totalAmount = WinOrLoseOver(goalUnitInt, diff, unit, item.betAmount, (decimal)commission);
+                                Console.WriteLine(totalAmount);
+                            }
+                            else
+                            {
+                                //AwayGoal - HomeGoal
+                                diff = 0 - 0;
+                                totalAmount = WinOrLoseOver(goalUnitInt, diff, unit, item.betAmount, (decimal)commission);
+                                Console.WriteLine(totalAmount);
+                            }
+                        }
+                        //----Check bet team is under----
+                        else
+                        {
+                            if (tempHome == true)
+                            {
+                                //AwayGoal - HomeGoal
+                                diff = 4 - 2;
+                                unit *= -1;
+                                totalAmount = WinOrLoseUnder(goalUnitInt, diff, unit, item.betAmount, (decimal)commission);
+                                Console.WriteLine(totalAmount);
 
-            //decimal dec_overOdds = Decimal.Parse("1.85");
-            //decimal dec_underOdds = Decimal.Parse("2.00");
-            //var goalsHandicap ="null";
-            ////Check class name of api whether it is name or handicap
-
-            //if (goalsHandicap.Length > 4)
-            //{
-            //    var newGoalsHandicap = goalsHandicap.Split(",");
-            //    goalsHandicap = newGoalsHandicap[1];
-            //}
-            //var dd = goalsHandicap;
-
+                            }
+                            else
+                            {
+                                //HomeGoal - AwayGoal
+                                diff = 2 - 0;
+                                unit *= -1;
+                                totalAmount = WinOrLoseUnder(goalUnitInt, diff, unit, item.betAmount, (decimal)commission);
+                                Console.WriteLine(totalAmount);
+                            }
+                        }//End of Over or Under     
+                    }
+                    //----For total goal betting-----
+                    else
+                    {
+                        int[] goal = CutBodyHandicap(item.betGoal);
+                        goalUnitInt = goal[0];
+                        unit = goal[1];
+                        diff = 1 + 2;
+                        if (item.betOver == true)
+                        {
+                            totalAmount = WinOrLoseOver(goalUnitInt, diff, unit, item.betAmount, (decimal)commission);
+                            Console.WriteLine(totalAmount);
+                        }
+                        if(item.betUnder == true)
+                        {
+                            unit *= -1;
+                            totalAmount = WinOrLoseUnder(goalUnitInt, diff, unit, item.betAmount, (decimal)commission);
+                            Console.WriteLine(totalAmount);
+                        }
+                    }//End of body or goal handicap
+                }//End of body or maung
+                // /Home/Test
+           }//End of one event result
             return View();
         }
 
+        //---------------------------------------Calculation Methods----------------------------
 
+        //Calculation odds to take the nearest value
+        public int Round(int odds)
+        {
+            int result;
+            int remainder = odds % 10;
+            if (remainder < 5)
+            {
+                result = odds - remainder;
+            }
+            else
+            {
+                int tempValue = 10 - remainder;
+                result = odds + tempValue;
+            }
+            return result;
+        }
 
+        //Concatanation goal and unit as a string body
+        public string Body(int unit, int goal)
+        {
+            string result;
+            if (unit.ToString().Length == 3)
+            {
+                result = goal.ToString() + unit.ToString();
+            }
+            else
+            {
+                result = goal.ToString() + "+" + unit.ToString();
+            }
+            return result;
+        }
+
+        //Concatanation unit as a string body
+        public string Draw(int unit)
+        {
+            string result;
+            if (unit.ToString().Length == 3)
+            {
+                result = unit.ToString();
+            }
+            else
+            {
+                result = "+" + unit.ToString();
+            }
+            return result;
+        }
+
+        //Method of Spliting String Handicap to Int Array
+        private int[] CutBodyHandicap(string betBody)
+        {
+            int[] result=new int[2];
+            string goalUnit;
+            if (betBody.Length >= 4)
+            {
+                goalUnit = betBody.Remove(1, 3);
+                string unit = betBody.Remove(0, 1);
+                if (goalUnit.Equals("="))
+                {
+                    result[0] = 0;
+                    result[1] = Convert.ToInt32(unit);
+                }
+                else
+                {
+                    result[0] = Convert.ToInt32(goalUnit);
+                    result[1] = Convert.ToInt32(unit);
+                }
+
+            }
+            else
+            {
+                goalUnit = betBody.Remove(1, 1);
+                if (goalUnit.Equals("="))
+                {
+                    result[0] = 0;
+                    result[1] = -100;
+                }
+                else
+                {
+                    result[0] = Convert.ToInt32(goalUnit);
+                    result[1] = -100;
+                }
+            }
+            return result;
+        }
+
+        //Method of Calculation Win or Lose for Over Betting
+        private int WinOrLoseOver(int goalUnit, int diff, decimal unit, int? betAmount,decimal com)
+        {
+            int result;
+            int tempValue;
+            int tempAmount;
+            if (diff == goalUnit)
+            {
+                tempAmount = (int)(betAmount * Math.Round(unit / 100, 2));
+                tempValue = (int)(betAmount + tempAmount);
+                if (tempValue > betAmount)
+                {
+                    var commision= (int)(tempValue * Math.Round(com / 100, 2));
+                    result = tempValue - commision;
+                }
+                else
+                {
+                    result = tempValue;
+                }
+            }
+            else if (diff > goalUnit)
+            {
+                tempAmount = (int)(betAmount * 2);
+                tempValue = (int)(tempAmount * Math.Round(com / 100, 2));
+                result = (int)(tempAmount - tempValue);
+            }
+            else
+            {
+                result = 0;
+            }
+
+            return result;
+        }
+
+        //Method of Calculation Win or Lose for Under Betting
+        private int WinOrLoseUnder(int goalUnit, int diff, decimal unit, int? betAmount, decimal com)
+        {
+            int result;
+            int tempValue;
+            int tempAmount;
+            if (diff == goalUnit)
+            {
+                tempAmount = (int)(betAmount * Math.Round(unit / 100, 2));
+                tempValue = (int)(betAmount + tempAmount);
+                if (tempValue > betAmount)
+                {
+                    var commision = (int)(tempValue * Math.Round(com / 100, 2));
+                    result = tempValue - commision;
+                }
+                else
+                {
+                    result = tempValue;
+                }
+            }
+            else if (diff < goalUnit)
+            {
+                tempAmount = (int)(betAmount * 2);
+                tempValue = (int)(tempAmount * Math.Round(com / 100, 2));
+                result = (int)(tempAmount - tempValue);
+            }
+            else
+            {
+                result = 0;
+            }
+
+            return result;
+        }
+
+        public IActionResult Hola()
+        {
+            int goalUnitInt = 0;
+            decimal unit = 0;
+            decimal totalAmount = 0;
+            var diff = 0;
+            //Check betting is body or maung handicap
+            var betTeam = 1;
+            var betAmount = 10000;
+            var betOver = false;
+            var betUnder = false;
+            var h = 4;
+            var a = 2;
+            var commission = db.TblUserCommission.Where(a => a.UserId == 1 && a.UserCommissionTypeId == 1).FirstOrDefault().SubUserCommission;
+            //Check betting is body or goal handicap
+            //----For body betting-----
+            if (betTeam != 0)
+            {
+
+                int[] body = CutBodyHandicap("2+50");
+                goalUnitInt = body[0];
+                unit = body[1];
+                var tempOver = false;
+                var tempUnder = true;
+                var tempHome = false;
+                var tempAway = true;
+
+                //----Check bet team is over----
+                if (tempOver == true)
+                {
+                    if (tempHome == true)
+                    {
+                        //HomeGoal - AwayGoal
+                        diff = h - a;
+                        totalAmount = WinOrLoseOver(goalUnitInt, diff, unit, betAmount, (decimal)commission);
+                        Console.WriteLine(totalAmount);
+                    }
+                    else
+                    {
+                        //AwayGoal - HomeGoal
+                        diff = a - h;
+                        totalAmount = WinOrLoseOver(goalUnitInt, diff, unit, betAmount, (decimal)commission);
+                        Console.WriteLine(totalAmount);
+                    }
+                }
+                //----Check bet team is under----
+                else
+                {
+                    if (tempHome == true)
+                    {
+                        //AwayGoal - HomeGoal
+                        diff = a - h;
+                        unit *= -1;
+                        totalAmount = WinOrLoseUnder(goalUnitInt, diff, unit, betAmount, (decimal)commission);
+                        Console.WriteLine(totalAmount);
+
+                    }
+                    else
+                    {
+                        //HomeGoal - AwayGoal
+                        diff = h - a;
+                        unit *= -1;
+                        totalAmount = WinOrLoseUnder(goalUnitInt, diff, unit, betAmount, (decimal)commission);
+                        Console.WriteLine(totalAmount);
+                    }
+                }//End of Over or Under     
+            }
+            //----For total goal betting-----
+            else
+            {
+                int[] goal = CutBodyHandicap("1+50");
+                goalUnitInt = goal[0];
+                unit = goal[1];
+                diff = a + h;
+                if (betOver == true)
+                {
+                    totalAmount = WinOrLoseOver(goalUnitInt, diff, unit, betAmount, (decimal)commission);
+                    Console.WriteLine(totalAmount);
+                }
+                if (betUnder == true)
+                {
+                    unit *= -1;
+                    totalAmount = WinOrLoseUnder(goalUnitInt, diff, unit, betAmount, (decimal)commission);
+                    Console.WriteLine(totalAmount);
+                }
+            }//End of body or goal handicap
+             //End of body or maung
+             // /Home/Test
+             //End of one event result
+            return View();
+        }
     }
 }
