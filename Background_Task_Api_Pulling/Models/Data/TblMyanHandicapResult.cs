@@ -14,5 +14,6 @@ namespace Background_Task_Api_Pulling.Models
         public decimal? AwayTeamId { get; set; }
         public decimal? LeagueId { get; set; }
         public decimal? RapidEventId { get; set; }
+        public decimal? PreUpcomingEventId { get; set; }
     }
 }

@@ -13,5 +13,12 @@ namespace Background_Task_Api_Pulling.Models
         public bool? Overs { get; set; }
         public string BodyOdd { get; set; }
         public string GoalOdd { get; set; }
+        public bool? Home { get; set; }
+        public bool? Away { get; set; }
+        public bool? IsHome { get; set; }
+        public decimal? RapidEventId { get; set; }
+        public decimal? UpcomingEventId { get; set; }
+        public decimal? OppositeTeamId { get; set; }
+        public bool? IsHomeBodyOdd { get; set; }
     }
 }

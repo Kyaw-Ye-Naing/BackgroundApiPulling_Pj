@@ -6,6 +6,7 @@ namespace Background_Task_Api_Pulling.Models
     public partial class TblUserBalance
     {
         public decimal UserBalanceId { get; set; }
+        public int? TransactionTypeId { get; set; }
         public string PostingNo { get; set; }
         public decimal? UserId { get; set; }
         public int? Inward { get; set; }

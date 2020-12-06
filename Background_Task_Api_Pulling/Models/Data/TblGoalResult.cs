@@ -11,5 +11,6 @@ namespace Background_Task_Api_Pulling.Models
         public int? AwayResult { get; set; }
         public DateTime? EventDatetime { get; set; }
         public DateTime? EventDate { get; set; }
+        public decimal? UpcomingEventId { get; set; }
     }
 }

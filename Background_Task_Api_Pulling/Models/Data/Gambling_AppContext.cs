@@ -28,6 +28,7 @@ namespace Background_Task_Api_Pulling.Models
         public virtual DbSet<TblMyanHandicapResult> TblMyanHandicapResult { get; set; }
         public virtual DbSet<TblPreUpcomingEvent> TblPreUpcomingEvent { get; set; }
         public virtual DbSet<TblRole> TblRole { get; set; }
+        public virtual DbSet<TblTransactionType> TblTransactionType { get; set; }
         public virtual DbSet<TblUnitHandicapFix> TblUnitHandicapFix { get; set; }
         public virtual DbSet<TblUpcomingEvent> TblUpcomingEvent { get; set; }
         public virtual DbSet<TblUser> TblUser { get; set; }
@@ -41,7 +42,7 @@ namespace Background_Task_Api_Pulling.Models
         {
             if (!optionsBuilder.IsConfigured)
             {
-
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
                 optionsBuilder.UseSqlServer("Data Source=172.104.40.242;Initial Catalog=Gambling_App;user id=sa;password=209851@ung");
             }
         }
@@ -97,6 +98,8 @@ namespace Background_Task_Api_Pulling.Models
                 entity.Property(e => e.PostingNo)
                     .HasColumnName("postingNo")
                     .HasMaxLength(50);
+
+                entity.Property(e => e.TransactionTypeId).HasColumnName("transactionTypeId");
 
                 entity.Property(e => e.UserId)
                     .HasColumnName("userId")
@@ -157,9 +160,9 @@ namespace Background_Task_Api_Pulling.Models
 
                 entity.Property(e => e.Amount).HasColumnName("amount");
 
-                entity.Property(e => e.EventId)
-                    .HasColumnName("eventId")
-                    .HasColumnType("decimal(18, 0)");
+                entity.Property(e => e.CreatedDate)
+                    .HasColumnName("createdDate")
+                    .HasColumnType("datetime");
 
                 entity.Property(e => e.GamblingTypeId).HasColumnName("gamblingTypeId");
 
@@ -167,11 +170,9 @@ namespace Background_Task_Api_Pulling.Models
                     .HasColumnName("postingNo")
                     .HasMaxLength(50);
 
-                entity.Property(e => e.RapidEventId)
-                    .HasColumnName("rapidEventId")
-                    .HasColumnType("decimal(18, 0)");
-
                 entity.Property(e => e.TeamCount).HasColumnName("teamCount");
+
+                entity.Property(e => e.TransactionTypeId).HasColumnName("transactionTypeId");
 
                 entity.Property(e => e.UserId)
                     .HasColumnName("userId")
@@ -189,6 +190,8 @@ namespace Background_Task_Api_Pulling.Models
                     .HasColumnType("decimal(18, 0)")
                     .ValueGeneratedOnAdd();
 
+                entity.Property(e => e.Away).HasColumnName("away");
+
                 entity.Property(e => e.BodyOdd)
                     .HasColumnName("bodyOdd")
                     .HasMaxLength(50);
@@ -205,13 +208,31 @@ namespace Background_Task_Api_Pulling.Models
                     .HasColumnName("goalOdd")
                     .HasMaxLength(50);
 
+                entity.Property(e => e.Home).HasColumnName("home");
+
+                entity.Property(e => e.IsHome).HasColumnName("isHome");
+
+                entity.Property(e => e.IsHomeBodyOdd).HasColumnName("isHomeBodyOdd");
+
                 entity.Property(e => e.LeagueId)
                     .HasColumnName("leagueId")
                     .HasColumnType("decimal(18, 0)");
 
+                entity.Property(e => e.OppositeTeamId)
+                    .HasColumnName("oppositeTeamId")
+                    .HasColumnType("decimal(18, 0)");
+
                 entity.Property(e => e.Overs).HasColumnName("overs");
 
+                entity.Property(e => e.RapidEventId)
+                    .HasColumnName("rapidEventId")
+                    .HasColumnType("decimal(18, 0)");
+
                 entity.Property(e => e.Under).HasColumnName("under");
+
+                entity.Property(e => e.UpcomingEventId)
+                    .HasColumnName("upcomingEventId")
+                    .HasColumnType("decimal(18, 0)");
             });
 
             modelBuilder.Entity<TblGamblingType>(entity =>
@@ -290,6 +311,10 @@ namespace Background_Task_Api_Pulling.Models
                     .HasColumnName("rapidEventId")
                     .HasMaxLength(10)
                     .IsFixedLength();
+
+                entity.Property(e => e.UpcomingEventId)
+                    .HasColumnName("upcomingEventId")
+                    .HasColumnType("decimal(18, 0)");
             });
 
             modelBuilder.Entity<TblHandicap>(entity =>
@@ -397,6 +422,10 @@ namespace Background_Task_Api_Pulling.Models
                     .HasColumnName("overTeamId")
                     .HasColumnType("decimal(18, 0)");
 
+                entity.Property(e => e.PreUpcomingEventId)
+                    .HasColumnName("preUpcomingEventId")
+                    .HasColumnType("decimal(18, 0)");
+
                 entity.Property(e => e.RapidEventId)
                     .HasColumnName("rapidEventId")
                     .HasColumnType("decimal(18, 0)");
@@ -468,6 +497,19 @@ namespace Background_Task_Api_Pulling.Models
 
                 entity.Property(e => e.Role)
                     .HasColumnName("role")
+                    .HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<TblTransactionType>(entity =>
+            {
+                entity.HasKey(e => e.TransactionTypeId);
+
+                entity.ToTable("tbl_transactionType");
+
+                entity.Property(e => e.TransactionTypeId).HasColumnName("transactionTypeId");
+
+                entity.Property(e => e.TransactionType)
+                    .HasColumnName("transactionType")
                     .HasMaxLength(50);
             });
 
@@ -598,6 +640,8 @@ namespace Background_Task_Api_Pulling.Models
                     .HasColumnName("postingNo")
                     .HasMaxLength(50);
 
+                entity.Property(e => e.TransactionTypeId).HasColumnName("transactionTypeId");
+
                 entity.Property(e => e.UserId)
                     .HasColumnName("userId")
                     .HasColumnType("decimal(18, 0)");
@@ -616,7 +660,7 @@ namespace Background_Task_Api_Pulling.Models
 
                 entity.Property(e => e.SubUserCommission)
                     .HasColumnName("subUserCommission")
-                    .HasColumnType("decimal(18, 0)");
+                    .HasColumnType("decimal(18, 2)");
 
                 entity.Property(e => e.SubUserId)
                     .HasColumnName("subUserId")
@@ -681,6 +725,8 @@ namespace Background_Task_Api_Pulling.Models
                 entity.Property(e => e.PostingNo)
                     .HasColumnName("postingNo")
                     .HasMaxLength(50);
+
+                entity.Property(e => e.TransactionTypeId).HasColumnName("transactionTypeId");
 
                 entity.Property(e => e.UserId)
                     .HasColumnName("userId")
