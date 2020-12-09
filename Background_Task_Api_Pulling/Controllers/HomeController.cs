@@ -25,10 +25,10 @@ namespace Background_Task_Api_Pulling.Controllers
         public IActionResult Index()
         {
             //RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Hourly);
-           // RecurringJob.AddOrUpdate(() => GetData(), Cron.Minutely);
-           RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Minutely);
-            RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Minutely);
-            RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Minutely);
+           RecurringJob.AddOrUpdate(() => GetData(), Cron.Hourly);
+           RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Hourly);
+            RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Hourly);
+            RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Hourly);
             return View();
         }
 
