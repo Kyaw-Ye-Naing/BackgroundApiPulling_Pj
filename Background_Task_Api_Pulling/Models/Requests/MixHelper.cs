@@ -8,6 +8,9 @@ namespace Background_Task_Api_Pulling.Models
     public class MixHelper
     {
         public decimal GamblingId { get; set; }
+        public int Amount { get; set; }
+        public decimal User { get; set; }
+        public int Count { get; set; }
         public List<Details> Details { get; set; }
     }
     public class Details
@@ -19,9 +22,6 @@ namespace Background_Task_Api_Pulling.Models
         public string BodyOdd { get; set; }
         public string GoalOdd { get; set; }
         public bool? IsHome { get; set; }
-        public decimal User { get; set; }
-        public int Amount { get; set; }
-        public int Count { get; set; }
         public decimal? RapidEventId { get; set; }
         public int HomeResult { get; set; }
         public int AwayResult { get; set; }
