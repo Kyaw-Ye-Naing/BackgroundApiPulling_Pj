@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace Background_Task_Api_Pulling.Models
+namespace Background_Task_Api_Pulling.Models.Data
 {
     public partial class Gambling_AppContext : DbContext
     {
@@ -15,8 +15,11 @@ namespace Background_Task_Api_Pulling.Models
         {
         }
 
+        public virtual DbSet<TblActivityLog> TblActivityLog { get; set; }
+        public virtual DbSet<TblCalComForWinLose> TblCalComForWinLose { get; set; }
         public virtual DbSet<TblConfirmLeague> TblConfirmLeague { get; set; }
         public virtual DbSet<TblCredit> TblCredit { get; set; }
+        public virtual DbSet<TblDisplayText> TblDisplayText { get; set; }
         public virtual DbSet<TblFootballTeam> TblFootballTeam { get; set; }
         public virtual DbSet<TblGambling> TblGambling { get; set; }
         public virtual DbSet<TblGamblingDetails> TblGamblingDetails { get; set; }
@@ -28,6 +31,7 @@ namespace Background_Task_Api_Pulling.Models
         public virtual DbSet<TblMyanHandicapResult> TblMyanHandicapResult { get; set; }
         public virtual DbSet<TblPreUpcomingEvent> TblPreUpcomingEvent { get; set; }
         public virtual DbSet<TblRole> TblRole { get; set; }
+        public virtual DbSet<TblRule> TblRule { get; set; }
         public virtual DbSet<TblTransactionType> TblTransactionType { get; set; }
         public virtual DbSet<TblUnitHandicapFix> TblUnitHandicapFix { get; set; }
         public virtual DbSet<TblUpcomingEvent> TblUpcomingEvent { get; set; }
@@ -36,19 +40,157 @@ namespace Background_Task_Api_Pulling.Models
         public virtual DbSet<TblUserCommission> TblUserCommission { get; set; }
         public virtual DbSet<TblUserCommissionType> TblUserCommissionType { get; set; }
         public virtual DbSet<TblUserPosting> TblUserPosting { get; set; }
+        public virtual DbSet<ViewGamblingWinLose> ViewGamblingWinLose { get; set; }
         public virtual DbSet<ViewUserBalance> ViewUserBalance { get; set; }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
-            {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
+            { 
                 optionsBuilder.UseSqlServer("Data Source=172.105.116.86;Initial Catalog=Gambling_App;user id=sa;password=kum0p@ssw0rd");
             }
         }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<TblActivityLog>(entity =>
+            {
+                entity.HasKey(e => e.ActivityLogId);
+
+                entity.ToTable("tbl_activityLog");
+
+                entity.Property(e => e.ActivityLogId)
+                    .HasColumnName("activityLogId")
+                    .HasColumnType("decimal(18, 0)")
+                    .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.Action).HasColumnName("action");
+
+                entity.Property(e => e.CreatedDate)
+                    .HasColumnName("createdDate")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.NewData).HasColumnName("newData");
+
+                entity.Property(e => e.NewUser)
+                    .HasColumnName("newUser")
+                    .HasColumnType("decimal(18, 0)");
+
+                entity.Property(e => e.OldData).HasColumnName("oldData");
+
+                entity.Property(e => e.PageName)
+                    .HasColumnName("pageName")
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.Remark)
+                    .HasColumnName("remark")
+                    .HasMaxLength(50);
+            });
+
+            modelBuilder.Entity<TblCalComForWinLose>(entity =>
+            {
+                entity.HasKey(e => e.CalComId);
+
+                entity.ToTable("tbl_CalComForWinLose");
+
+                entity.Property(e => e.CalComId)
+                    .HasColumnName("calComId")
+                    .HasColumnType("decimal(18, 0)")
+                    .ValueGeneratedOnAdd();
+
+                entity.Property(e => e.BetAmount)
+                    .HasColumnName("betAmount")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.CommissionTypeId).HasColumnName("commissionTypeId");
+
+                entity.Property(e => e.CreatedDate)
+                    .HasColumnName("createdDate")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.DefaultCom)
+                    .HasColumnName("defaultCom")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.GamblingTypeId).HasColumnName("gamblingTypeId");
+
+                entity.Property(e => e.GamblingWinId)
+                    .HasColumnName("gamblingWinId")
+                    .HasColumnType("decimal(18, 0)");
+
+                entity.Property(e => e.GoalResultId)
+                    .HasColumnName("goalResultId")
+                    .HasColumnType("decimal(18, 0)");
+
+                entity.Property(e => e.LoseAmount)
+                    .HasColumnName("loseAmount")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.PostingNo).HasColumnName("postingNo");
+
+                entity.Property(e => e.SubCom)
+                    .HasColumnName("subCom")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.SubRoleId).HasColumnName("subRoleId");
+
+                entity.Property(e => e.SubUserId)
+                    .HasColumnName("subUserId")
+                    .HasColumnType("decimal(18, 0)");
+
+                entity.Property(e => e.SubWl)
+                    .HasColumnName("subWL")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.SubWlPm)
+                    .HasColumnName("subWL_PM")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.UpCom)
+                    .HasColumnName("upCom")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.UpRoleId).HasColumnName("upRoleId");
+
+                entity.Property(e => e.UpUserId)
+                    .HasColumnName("upUserId")
+                    .HasColumnType("decimal(18, 0)");
+
+                entity.Property(e => e.UpWl)
+                    .HasColumnName("upWL")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.UpWlPm)
+                    .HasColumnName("upWL_PM")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.UserCom)
+                    .HasColumnName("userCom")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.UserId)
+                    .HasColumnName("userId")
+                    .HasColumnType("decimal(18, 0)");
+
+                entity.Property(e => e.UserRoleId).HasColumnName("userRoleId");
+
+                entity.Property(e => e.UserWl)
+                    .HasColumnName("userWL")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.UserWlPm)
+                    .HasColumnName("userWL_PM")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.WinAmount)
+                    .HasColumnName("winAmount")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.WlPercent)
+                    .HasColumnName("wlPercent")
+                    .HasColumnType("decimal(18, 2)");
+            });
+
             modelBuilder.Entity<TblConfirmLeague>(entity =>
             {
                 entity.HasKey(e => e.ConfirmLeagueId);
@@ -104,6 +246,17 @@ namespace Background_Task_Api_Pulling.Models
                 entity.Property(e => e.UserId)
                     .HasColumnName("userId")
                     .HasColumnType("decimal(18, 0)");
+            });
+
+            modelBuilder.Entity<TblDisplayText>(entity =>
+            {
+                entity.HasKey(e => e.DisplayId);
+
+                entity.ToTable("tbl_displayText");
+
+                entity.Property(e => e.DisplayId).HasColumnName("displayId");
+
+                entity.Property(e => e.DisplayText).HasColumnName("displayText");
             });
 
             modelBuilder.Entity<TblFootballTeam>(entity =>
@@ -265,6 +418,10 @@ namespace Background_Task_Api_Pulling.Models
 
                 entity.Property(e => e.Active).HasColumnName("active");
 
+                entity.Property(e => e.BetAmount)
+                    .HasColumnName("betAmount")
+                    .HasColumnType("decimal(18, 2)");
+
                 entity.Property(e => e.GamblingId)
                     .HasColumnName("gamblingId")
                     .HasColumnType("decimal(18, 0)");
@@ -275,12 +432,20 @@ namespace Background_Task_Api_Pulling.Models
                     .HasColumnName("goalResultId")
                     .HasColumnType("decimal(18, 0)");
 
+                entity.Property(e => e.LoseAmount)
+                    .HasColumnName("loseAmount")
+                    .HasColumnType("decimal(18, 2)");
+
                 entity.Property(e => e.UserId)
                     .HasColumnName("userId")
                     .HasColumnType("decimal(18, 0)");
 
                 entity.Property(e => e.WinAmount)
                     .HasColumnName("winAmount")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.Wlpercent)
+                    .HasColumnName("wlpercent")
                     .HasColumnType("decimal(18, 2)");
             });
 
@@ -500,6 +665,21 @@ namespace Background_Task_Api_Pulling.Models
                     .HasMaxLength(50);
             });
 
+            modelBuilder.Entity<TblRule>(entity =>
+            {
+                entity.HasKey(e => e.RuleId);
+
+                entity.ToTable("tbl_rule");
+
+                entity.Property(e => e.RuleId).HasColumnName("ruleId");
+
+                entity.Property(e => e.Descriptions).HasColumnName("descriptions");
+
+                entity.Property(e => e.RuleTitle)
+                    .HasColumnName("ruleTitle")
+                    .HasMaxLength(50);
+            });
+
             modelBuilder.Entity<TblTransactionType>(entity =>
             {
                 entity.HasKey(e => e.TransactionTypeId);
@@ -692,6 +872,10 @@ namespace Background_Task_Api_Pulling.Models
                     .HasColumnName("commissionType")
                     .HasMaxLength(50);
 
+                entity.Property(e => e.DefaultCommission)
+                    .HasColumnName("defaultCommission")
+                    .HasColumnType("decimal(18, 2)");
+
                 entity.Property(e => e.GamblingTypeId).HasColumnName("gamblingTypeId");
             });
 
@@ -716,6 +900,10 @@ namespace Background_Task_Api_Pulling.Models
                     .HasColumnName("createdDate")
                     .HasColumnType("datetime");
 
+                entity.Property(e => e.GamblingId)
+                    .HasColumnName("gamblingId")
+                    .HasColumnType("decimal(18, 0)");
+
                 entity.Property(e => e.Inward).HasColumnType("decimal(18, 2)");
 
                 entity.Property(e => e.Outward)
@@ -731,6 +919,83 @@ namespace Background_Task_Api_Pulling.Models
                 entity.Property(e => e.UserId)
                     .HasColumnName("userId")
                     .HasColumnType("decimal(18, 0)");
+            });
+
+            modelBuilder.Entity<ViewGamblingWinLose>(entity =>
+            {
+                entity.HasNoKey();
+
+                entity.ToView("ViewGamblingWinLose");
+
+                entity.Property(e => e.AgentCom)
+                    .HasColumnName("agentCom")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.AgentId)
+                    .HasColumnName("agentId")
+                    .HasColumnType("decimal(18, 0)");
+
+                entity.Property(e => e.AgentRole)
+                    .HasColumnName("agentRole")
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.AgentRoleId).HasColumnName("agentRoleId");
+
+                entity.Property(e => e.BetAmount)
+                    .HasColumnName("betAmount")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.CommissionTypeId).HasColumnName("commissionTypeId");
+
+                entity.Property(e => e.CreatedDate)
+                    .HasColumnName("createdDate")
+                    .HasColumnType("datetime");
+
+                entity.Property(e => e.DefaultCom)
+                    .HasColumnName("defaultCom")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.GamblingTypeId).HasColumnName("gamblingTypeId");
+
+                entity.Property(e => e.GamblingWinId)
+                    .HasColumnName("gamblingWinId")
+                    .HasColumnType("decimal(18, 0)");
+
+                entity.Property(e => e.GoalResultId)
+                    .HasColumnName("goalResultId")
+                    .HasColumnType("decimal(18, 0)");
+
+                entity.Property(e => e.LoseAmount)
+                    .HasColumnName("loseAmount")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.Role)
+                    .HasColumnName("role")
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.RoleId).HasColumnName("roleId");
+
+                entity.Property(e => e.TeamCount).HasColumnName("teamCount");
+
+                entity.Property(e => e.UserCom)
+                    .HasColumnName("userCom")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.UserId)
+                    .HasColumnName("userId")
+                    .HasColumnType("decimal(18, 0)");
+
+                entity.Property(e => e.Username)
+                    .HasColumnName("username")
+                    .HasMaxLength(50);
+
+                entity.Property(e => e.WinAmount)
+                    .HasColumnName("winAmount")
+                    .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.Wlpercent)
+                    .HasColumnName("wlpercent")
+                    .HasColumnType("decimal(18, 2)");
             });
 
             modelBuilder.Entity<ViewUserBalance>(entity =>
@@ -749,6 +1014,8 @@ namespace Background_Task_Api_Pulling.Models
                     .HasColumnName("userId")
                     .HasColumnType("decimal(18, 0)");
             });
+
+            modelBuilder.HasSequence("Sequence-20201217-160907");
 
             OnModelCreatingPartial(modelBuilder);
         }

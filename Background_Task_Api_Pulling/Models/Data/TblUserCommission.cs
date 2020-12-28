@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace Background_Task_Api_Pulling.Models
+namespace Background_Task_Api_Pulling.Models.Data
 {
     public partial class TblUserCommission
     {

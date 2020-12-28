@@ -19,5 +19,6 @@ namespace Background_Task_Api_Pulling.Models.Requests
         public string BetGoal { get; set; }
         public decimal? BetUser { get; set; }
         public decimal? BetRapid { get; set; }
+        public bool BetIsHomeOdds { get; set; }
     }
 }

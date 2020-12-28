@@ -24,7 +24,7 @@ namespace Background_Task_Api_Pulling.Models
         public bool? IsHome { get; set; }
         public decimal? RapidEventId { get; set; }
         public int HomeResult { get; set; }
-        public int AwayResult { get; set; }
-
+        public int AwayResult { get; set; } 
+        public bool IsHomeBodyOdds { get; set; }
     }
 }
