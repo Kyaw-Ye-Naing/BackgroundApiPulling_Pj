@@ -1218,6 +1218,7 @@ C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Back
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\bin\Debug\netcoreapp3.1\runtimes\unix\lib\netcoreapp2.0\System.Runtime.Caching.dll
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\bin\Debug\netcoreapp3.1\runtimes\win\lib\netcoreapp2.0\System.Runtime.Caching.dll
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\bin\Debug\netcoreapp3.1\runtimes\win\lib\netstandard2.0\System.Security.Cryptography.ProtectedData.dll
+C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.csprojAssemblyReference.cache
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.AssemblyInfoInputs.cache
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.AssemblyInfo.cs
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.csproj.CoreCompileInputs.cache
@@ -1246,4 +1247,3 @@ C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Back
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.dll
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.pdb
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.genruntimeconfig.cache
-C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.csprojAssemblyReference.cache

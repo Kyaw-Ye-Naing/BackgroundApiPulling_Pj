@@ -25,5 +25,6 @@ namespace Background_Task_Api_Pulling.Models.Data
         public decimal? UserCom { get; set; }
         public decimal? DefaultCom { get; set; }
         public DateTime? CreatedDate { get; set; }
+        public decimal? GamblingId { get; set; }
     }
 }

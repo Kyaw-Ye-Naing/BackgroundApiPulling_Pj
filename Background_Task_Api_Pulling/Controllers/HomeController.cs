@@ -9,8 +9,6 @@ using Hangfire;
 using System.Collections.Generic;
 using Background_Task_Api_Pulling.Models.Requests;
 using Background_Task_Api_Pulling.Models.Data;
-using Microsoft.EntityFrameworkCore;
-using Background_Task_Api_Pulling.StoredProcedure.ReportsSP;
 using System.Data;
 using Background_Task_Api_Pulling.StoredProcedure;
 using Microsoft.Extensions.Configuration;
@@ -27,21 +25,22 @@ namespace Background_Task_Api_Pulling.Controllers
             clsPublicVariable.connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
-        [Obsolete]
+        //[Obsolete]
         public IActionResult Index()
         {
-            //RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Hourly);
+            //RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Minutely);
             //BackgroundJob.Schedule(() => PublishMessage(), TimeSpan.FromMilliseconds(2000));
-           RecurringJob.AddOrUpdate(() => GetData(),Cron.HourInterval(6));
+            //RecurringJob.AddOrUpdate(() => GetData(),Cron.HourInterval(6));
+            //RecurringJob.AddOrUpdate(() => GetData(), Cron.Minutely);
             //RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.HourInterval(5));
             //RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Hourly);
             //RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Hourly);
             //RecurringJob.AddOrUpdate(()=>UpdateHandicapFromPre(),Cron.Minutely);
-            //  RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Minutely);
-            //   RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Minutely);
-            //  RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Minutely);
+            //RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Minutely);
+            //RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Minutely);
+            //RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Minutely);
 
-            // RecurringJob.AddOrUpdate(() => MixCalculation(), Cron.Hourly);
+           // RecurringJob.AddOrUpdate(() => MixCalculation(), Cron.Minutely);
             return View();
         }
 
@@ -80,7 +79,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                   goalUnderOdds = e.UnderOdd,
                                   PreEventId = p.PreUpcommingEventId
                               }).ToList();
-                if (person.Count == 0)
+                if (person.Count != 0)
                 {
                     foreach (var s in person)
                     {
@@ -233,7 +232,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                   goalUnderOdds = e.UnderOdd,
                                   preEvent = p.PreUpcommingEventId
                               }).ToList();
-                if (person.Count == 0)
+                if (person.Count != 0)
                 {
                     foreach (var s in person)
                     {
@@ -354,7 +353,7 @@ namespace Background_Task_Api_Pulling.Controllers
             {
                 Console.WriteLine(ex.Message);
             }
-
+            //return View();
         }
 
         // Calculation Myanmar Handicap from zero handicap
@@ -388,7 +387,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                   goalUnderOdds = e.UnderOdd,
                                   preEventId = p.PreUpcommingEventId
                               }).ToList();
-                if (person.Count == 0)
+                if (person.Count != 0)
                 {
                     foreach (var s in person)
                     {
@@ -497,53 +496,57 @@ namespace Background_Task_Api_Pulling.Controllers
             {
                 Console.WriteLine(ex.Message);
             }
-
+            //return View();
         }
 
         //Fetch Goals Result Data From RapidAPI
-        public void GetGoals()
+        public IActionResult GetGoals()
         {
             //Filtering with today date
             var eventId = db.TblPreUpcomingEvent.Where(a => a.Active == true).ToList();
+            var goals = db.TblGoalResult.ToList();
             foreach (var c in eventId)
             {
-                //  var ftValue = db.TblGoalResult.ToList().Any(a => Convert.ToInt32(a.RapidEventId) == Convert.ToInt32(c));
-                // if (ftValue == false)
-                // {
-                //Record not exist
-                //Data fetch from API
-                var eventString = String.Concat("https://betsapi2.p.rapidapi.com/v1/bet365/result?event_id=", c.RapidEventId.ToString());
-                var client = new RestClient(eventString);
-                var request = new RestRequest(Method.GET);
-                request.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
-                request.AddHeader("x-rapidapi-host", "betsapi2.p.rapidapi.com");
-                IRestResponse response = client.Execute(request);
-                GoalResult data = JsonConvert.DeserializeObject<GoalResult>(response.Content);
-
-                if (data.results[0].ss != null)
+                var ftValue = goals.Any(a => Decimal.Parse(a.RapidEventId) == c.RapidEventId);
+                if (ftValue == false)
                 {
-                    //Add data into goal result table
-                    TblGoalResult goalResult = new TblGoalResult();
-                    DateTime dt = DateTime.Now;
-                    var golArr = data.results[0].ss.Split("-");
-                    //goalResult.RapidEventId = c.RapidEventId.ToString();
-                    //goalResult.UpcomingEventId = c.PreUpcommingEventId;
-                    //goalResult.HomeResult = Convert.ToInt32(golArr[0]);
-                    //goalResult.AwayResult = Convert.ToInt32(golArr[1]);
-                    //goalResult.EventDate = dt.Date;
-                    //goalResult.EventDatetime = dt;
-                    //db.TblGoalResult.Add(goalResult);
-                    //db.SaveChanges();
-                    BodyCalculation(Convert.ToInt32(golArr[0]), Convert.ToInt32(golArr[1]), (decimal)c.RapidEventId);
-                    //var pp=BodyCalculation(0,1, 2818202);
-                }
-                else if (data.results[0].scores != null)
-                {
-                    var homeGoal = data.results[0].scores._1.home;
-                    var awayGoal = data.results[0].scores._1.away;
-                }
+                    //Record not exist
+                    //Data fetch from API
+                    var eventString = String.Concat("https://betsapi2.p.rapidapi.com/v1/bet365/result?event_id=", c.RapidEventId.ToString());
+                    var client = new RestClient(eventString);
+                    var request = new RestRequest(Method.GET);
+                    request.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
+                    request.AddHeader("x-rapidapi-host", "betsapi2.p.rapidapi.com");
+                    IRestResponse response = client.Execute(request);
+                    GoalResult data = JsonConvert.DeserializeObject<GoalResult>(response.Content);
 
+                    if (data.results[0].ss != null)
+                    {
+                        //Add data into goal result table
+                        TblGoalResult goalResult = new TblGoalResult();
+                        DateTime dt = DateTime.Now;
+                        var golArr = data.results[0].ss.Split("-");
+                        goalResult.RapidEventId = c.RapidEventId.ToString();
+                        goalResult.UpcomingEventId = c.PreUpcommingEventId;
+                        goalResult.HomeResult = Convert.ToInt32(golArr[0]);
+                        goalResult.AwayResult = Convert.ToInt32(golArr[1]);
+                        goalResult.EventDate = dt.Date;
+                        goalResult.EventDatetime = dt;
+                        db.TblGoalResult.Add(goalResult);
+                        db.SaveChanges();
+                        BodyCalculation(Convert.ToInt32(golArr[0]), Convert.ToInt32(golArr[1]), (decimal)c.RapidEventId);
+                        Console.WriteLine("Complete 1 Body");
+                        //var pp=BodyCalculation(0,1, 2818202);
+                    }
+                }
+                else { Console.WriteLine("Record exists"); }
+                //else if (data.results[0].scores != null)
+                //{
+                //    var homeGoal = data.results[0].scores._1.home;
+                //    var awayGoal = data.results[0].scores._1.away;
+                //}
             }//end of foreach loop
+            return View();
         }
 
         //Fetch data from API
@@ -596,8 +599,8 @@ namespace Background_Task_Api_Pulling.Controllers
                         //    Console.WriteLine("This is Esports data");
                         //}
                         //if (dd.Equals("England Premier League") || dd.Equals("England Championship") || dd.Equals("Germany Bundesliga I") ||
-                        //   dd.Equals("Italy Serie A") || dd.Equals("France Ligue 2"))   
-                        if (dd.Equals("England Premier League"))
+                        //   dd.Equals("Italy Serie A") || dd.Equals("France Ligue 2"))   dd.Equals("Spain Primera Liga")
+                        if (dd.Equals("Spain Primera Liga") || dd.Equals("Italy Serie A"))
                         {
                             //Fetch  Odds data from RapidApI 
                             eventId = data1.results[ii].id;
@@ -704,7 +707,7 @@ namespace Background_Task_Api_Pulling.Controllers
                             decimal dec_overOdds = 0;
                             decimal dec_underOdds = 0;
                             string goalsHandicap = "0";
-                            if (data2.results[0].asian_lines != null)
+                            if (data2.results[0].asian_lines.sp.asian_handicap != null)
                             {
                                 decimal decHd = Decimal.Parse(data2.results[0].FI);
                                 decimal dec_home_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[0].odds);
@@ -835,14 +838,14 @@ namespace Background_Task_Api_Pulling.Controllers
                                 //HomeGoal - AwayGoal
                                 diff = hgoal - agoal;
                                 totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, item.BetAmount);
-                                Console.WriteLine(totalAmount);
+                                //Console.WriteLine(totalAmount);
                             }
                             else
                             {
                                 //AwayGoal - HomeGoal
                                 diff = agoal - hgoal;
                                 totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, item.BetAmount);
-                                Console.WriteLine(totalAmount);
+                                //Console.WriteLine(totalAmount);
                             }
                         }
                         //----Check bet team is under----
@@ -854,7 +857,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                 diff = agoal - hgoal;
                                 unit *= -1;
                                 totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, item.BetAmount);
-                                Console.WriteLine(totalAmount);
+                                //Console.WriteLine(totalAmount);
                             }
                             else
                             {
@@ -862,7 +865,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                 diff = hgoal - agoal;
                                 unit *= -1;
                                 totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, item.BetAmount);
-                                Console.WriteLine(totalAmount);
+                               // Console.WriteLine(totalAmount);
                             }
                         }//End of Over or Under 
                     }
@@ -876,13 +879,13 @@ namespace Background_Task_Api_Pulling.Controllers
                         if (item.BetOver == true)
                         {
                             totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, item.BetAmount);
-                            Console.WriteLine(totalAmount);
+                            //Console.WriteLine(totalAmount);
                         }
                         if (item.BetUnder == true)
                         {
                             unit *= -1;
                             totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, item.BetAmount);
-                            Console.WriteLine(totalAmount);
+                            //Console.WriteLine(totalAmount);
                         }
                     }//End of body or goal handicap
 
@@ -905,7 +908,7 @@ namespace Background_Task_Api_Pulling.Controllers
             var result = (from g in db.TblGambling
                           join d in db.TblGamblingDetails
                           on g.GamblingId equals d.GamblingId
-                          where g.Active == true && g.GamblingId <= 20007 && g.GamblingTypeId == 2 && g.GamblingId >= 20006
+                          where g.Active == true  && g.GamblingTypeId == 2 
                           select new BetInfo
                           {
                               BetGambling = g.GamblingId,
@@ -1086,6 +1089,7 @@ namespace Background_Task_Api_Pulling.Controllers
                 //Save Function and commission calculation function
                 isWin = SaveCommonFunc(originalAmount, winningAmount, data.GamblingId, data.Count, data.User);
                 bool os = comm.CalculateCommissionForWinLose(data.GamblingId);
+                Console.WriteLine("Complete 1");
             }
         }
 

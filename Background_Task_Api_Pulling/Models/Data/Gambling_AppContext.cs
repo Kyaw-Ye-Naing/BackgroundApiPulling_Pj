@@ -46,7 +46,7 @@ namespace Background_Task_Api_Pulling.Models.Data
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
-            { 
+            {
                 optionsBuilder.UseSqlServer("Data Source=172.105.116.86;Initial Catalog=Gambling_App;user id=sa;password=kum0p@ssw0rd");
             }
         }
@@ -499,7 +499,7 @@ namespace Background_Task_Api_Pulling.Models.Data
 
                 entity.Property(e => e.AwayOdd)
                     .HasColumnName("awayOdd")
-                    .HasColumnType("decimal(18, 2)");
+                    .HasColumnType("decimal(18, 3)");
 
                 entity.Property(e => e.EventDatetime)
                     .HasColumnName("eventDatetime")
@@ -515,11 +515,11 @@ namespace Background_Task_Api_Pulling.Models.Data
 
                 entity.Property(e => e.HomeOdd)
                     .HasColumnName("homeOdd")
-                    .HasColumnType("decimal(18, 2)");
+                    .HasColumnType("decimal(18, 3)");
 
                 entity.Property(e => e.OverOdd)
                     .HasColumnName("overOdd")
-                    .HasColumnType("decimal(18, 2)");
+                    .HasColumnType("decimal(18, 3)");
 
                 entity.Property(e => e.RapidEventId)
                     .HasColumnName("rapidEventId")
@@ -527,7 +527,7 @@ namespace Background_Task_Api_Pulling.Models.Data
 
                 entity.Property(e => e.UnderOdd)
                     .HasColumnName("underOdd")
-                    .HasColumnType("decimal(18, 2)");
+                    .HasColumnType("decimal(18, 3)");
             });
 
             modelBuilder.Entity<TblLeague>(entity =>
@@ -954,6 +954,10 @@ namespace Background_Task_Api_Pulling.Models.Data
                 entity.Property(e => e.DefaultCom)
                     .HasColumnName("defaultCom")
                     .HasColumnType("decimal(18, 2)");
+
+                entity.Property(e => e.GamblingId)
+                    .HasColumnName("gamblingId")
+                    .HasColumnType("decimal(18, 0)");
 
                 entity.Property(e => e.GamblingTypeId).HasColumnName("gamblingTypeId");
 
