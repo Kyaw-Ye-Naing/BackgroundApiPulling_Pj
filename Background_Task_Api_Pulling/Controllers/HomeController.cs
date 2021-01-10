@@ -40,7 +40,7 @@ namespace Background_Task_Api_Pulling.Controllers
             //RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Minutely);
             //RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Minutely);
 
-           // RecurringJob.AddOrUpdate(() => MixCalculation(), Cron.Minutely);
+            // RecurringJob.AddOrUpdate(() => MixCalculation(), Cron.Minutely);
             return View();
         }
 
@@ -191,7 +191,7 @@ namespace Background_Task_Api_Pulling.Controllers
                             idResult.PreUpcomingEventId = s.PreEventId;
                             db.SaveChanges();
                         }//end of save data
-                        Console.WriteLine("Complete 1 Hadicap result from   HOME ");
+                        //Console.WriteLine("Complete 1 Hadicap result from   HOME ");
                     }//end of foreach loop
                 }
             }
@@ -215,7 +215,6 @@ namespace Background_Task_Api_Pulling.Controllers
                 var person = (from p in db.TblPreUpcomingEvent
                               join e in db.TblHandicap
                               on p.RapidEventId equals e.RapidEventId
-                              //where e.AwayHandicap.Contains("-") && p.Active == true
                               where (e.AwayHandicap.Contains("-")) && p.Active == true
                               select new
                               {
@@ -345,7 +344,7 @@ namespace Background_Task_Api_Pulling.Controllers
                             idResult.PreUpcomingEventId = s.preEvent;
                             db.SaveChanges();
                         }//end of save
-                        Console.WriteLine("Complete 1 jandicap result from   AWAY  ");
+                        //Console.WriteLine("Complete 1 jandicap result from   AWAY  ");
                     }
                 }
             }
@@ -391,7 +390,6 @@ namespace Background_Task_Api_Pulling.Controllers
                 {
                     foreach (var s in person)
                     {
-
                         TblMyanHandicapResult myanHandicapResult = new TblMyanHandicapResult();
                         //Calculate body handicap
                         if (s.homeOdds > s.awayOdds)
@@ -488,7 +486,7 @@ namespace Background_Task_Api_Pulling.Controllers
                             idResult.PreUpcomingEventId = s.preEventId;
                             db.SaveChanges();
                         }//end of save
-                        Console.WriteLine("Complete 1 result from   ZERO  ");
+                       // Console.WriteLine("Complete 1 result from   ZERO  ");
                     }//end of foreach loop
                 }
             }
@@ -508,7 +506,7 @@ namespace Background_Task_Api_Pulling.Controllers
             foreach (var c in eventId)
             {
                 var ftValue = goals.Any(a => Decimal.Parse(a.RapidEventId) == c.RapidEventId);
-                if (ftValue == false)
+                if (ftValue != true)
                 {
                     //Record not exist
                     //Data fetch from API
@@ -519,12 +517,14 @@ namespace Background_Task_Api_Pulling.Controllers
                     request.AddHeader("x-rapidapi-host", "betsapi2.p.rapidapi.com");
                     IRestResponse response = client.Execute(request);
                     GoalResult data = JsonConvert.DeserializeObject<GoalResult>(response.Content);
+                    int status = Convert.ToInt32(data.results[0].time_status);
+                    DateTime dt = DateTime.Now.AddHours(6).AddMinutes(30);
 
-                    if (data.results[0].ss != null)
+                    //Check event is postponed or cancelled
+                    if (status == 3)
                     {
-                        //Add data into goal result table
                         TblGoalResult goalResult = new TblGoalResult();
-                        DateTime dt = DateTime.Now;
+                      
                         var golArr = data.results[0].ss.Split("-");
                         goalResult.RapidEventId = c.RapidEventId.ToString();
                         goalResult.UpcomingEventId = c.PreUpcommingEventId;
@@ -534,17 +534,26 @@ namespace Background_Task_Api_Pulling.Controllers
                         goalResult.EventDatetime = dt;
                         db.TblGoalResult.Add(goalResult);
                         db.SaveChanges();
-                        BodyCalculation(Convert.ToInt32(golArr[0]), Convert.ToInt32(golArr[1]), (decimal)c.RapidEventId);
-                        Console.WriteLine("Complete 1 Body");
-                        //var pp=BodyCalculation(0,1, 2818202);
+                      //  BodyCalculation(Convert.ToInt32(golArr[0]), Convert.ToInt32(golArr[1]), (decimal)c.RapidEventId);
+                       // Console.WriteLine("Complete 1 Body");
+                    }
+                    else if (status == 4 || status == 5)
+                    {
+                        TblGoalResult goalResult = new TblGoalResult();
+                        goalResult.RapidEventId = c.RapidEventId.ToString();
+                        goalResult.UpcomingEventId = 10004;
+                        goalResult.HomeResult = -1;
+                        goalResult.AwayResult = -1;
+                        goalResult.EventDate = dt.Date;
+                        goalResult.EventDatetime = dt;
+                        db.TblGoalResult.Add(goalResult);
+                        db.SaveChanges();
+                       // BodyCalculation(-1, -1, (decimal)c.RapidEventId);
+                        //Console.WriteLine("Complete 1 Body");
                     }
                 }
-                else { Console.WriteLine("Record exists"); }
-                //else if (data.results[0].scores != null)
-                //{
-                //    var homeGoal = data.results[0].scores._1.home;
-                //    var awayGoal = data.results[0].scores._1.away;
-                //}
+                else { //Console.WriteLine("Record exists"); 
+                }
             }//end of foreach loop
             return View();
         }
@@ -600,7 +609,7 @@ namespace Background_Task_Api_Pulling.Controllers
                         //}
                         //if (dd.Equals("England Premier League") || dd.Equals("England Championship") || dd.Equals("Germany Bundesliga I") ||
                         //   dd.Equals("Italy Serie A") || dd.Equals("France Ligue 2"))   dd.Equals("Spain Primera Liga")
-                        if (dd.Equals("Spain Primera Liga") || dd.Equals("Italy Serie A"))
+                        if (dd.Equals("England Premier League"))
                         {
                             //Fetch  Odds data from RapidApI 
                             eventId = data1.results[ii].id;
@@ -640,7 +649,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                 ft.FootballTeamMyan = awayTeam;
                                 ft.RapidTeamId = decAway;
                                 ft.LeagueId = ft_lgId;
-                                ft.CreatedDate = DateTime.Now;
+                                ft.CreatedDate = DateTime.Now.AddHours(6).AddMinutes(30);
                                 db.TblFootballTeam.Add(ft);
                                 db.SaveChanges();
                             }
@@ -656,7 +665,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                 home_ft.FootballTeamMyan = homeTeam;
                                 home_ft.RapidTeamId = decHome;
                                 home_ft.LeagueId = ft_lgId;
-                                home_ft.CreatedDate = DateTime.Now;
+                                home_ft.CreatedDate = DateTime.Now.AddHours(6).AddMinutes(30);
                                 db.TblFootballTeam.Add(home_ft);
                                 db.SaveChanges();
                             }
@@ -665,8 +674,9 @@ namespace Background_Task_Api_Pulling.Controllers
                             DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
                             var time_stamp = Convert.ToDouble(data1.results[ii].time);
                             dtDateTime = dtDateTime.AddSeconds(time_stamp).ToLocalTime();
-                            var shortdate = dtDateTime.ToShortDateString();
-                            var shorttime = dtDateTime.ToShortTimeString();
+                            DateTime dtDateTimeNew = dtDateTime.AddHours(6).AddMinutes(30);
+                            var shortdate = dtDateTimeNew.ToShortDateString();
+                            var shorttime = dtDateTimeNew.ToShortTimeString();
 
                             TblUpcomingEvent up = new TblUpcomingEvent();
                             decimal decUp = Decimal.Parse(data1.results[ii].id);
@@ -767,11 +777,11 @@ namespace Background_Task_Api_Pulling.Controllers
                                     db.SaveChanges();
                                 }//end of save database
                             }//end of check asian line data is null
-                            Console.WriteLine("Completed Data Result");
+                            //Console.WriteLine("Completed Data Result");
                         }//end of filter UCL
                          // Console.WriteLine("Completed Data" + ii + "Result");
                     }//end of fetch one data
-                     //  Console.WriteLine("Completed Page" + page + "Result");
+                       //Console.WriteLine("Completed Page" + page + "Result");
                 }//end of page
             }
             catch (Exception ex)
@@ -780,126 +790,8 @@ namespace Background_Task_Api_Pulling.Controllers
             }
         }
 
-        // Calculation Body Handicap From Users
-        public bool BodyCalculation(int hgoal, int agoal, decimal rapid)
-        {
-            StringConcat @string = new StringConcat();
-            Betting bettingCal = new Betting();
-            CalculateComm comm = new CalculateComm();
-            List<TblUser> users = new List<TblUser>();
-            users = db.TblUser.ToList();
-            int goalUnitInt = 0;
-            decimal unit = 0;
-            decimal totalAmount = 0;
-            var betting = (from g in db.TblGambling
-                           join d in db.TblGamblingDetails
-                           on g.GamblingId equals d.GamblingId
-                           where d.RapidEventId == rapid
-                           where g.Active == true/*&& g.CreatedDate.Value.Date == DateTime.Now.Date*/ && g.GamblingTypeId == 1
-                           select new BetInfo
-                           {
-                               BetType = g.GamblingTypeId,
-                               BetGambling = g.GamblingId,
-                               BetTeamCount = (int)g.TeamCount,
-                               BetTeam = (decimal)d.FootballTeamId,
-                               BetOver = (bool)d.Overs,
-                               BetUnder = (bool)d.Under,
-                               BetIsHome = d.IsHome,
-                               BetAmount = g.Amount,
-                               BetBody = d.BodyOdd,
-                               BetGoal = d.GoalOdd,
-                               BetUser = g.UserId,
-                               BetIsHomeOdds = (bool)d.IsHomeBodyOdd
-                           }).ToList();
-            if (betting.Count != 0)
-            {
-                foreach (var item in betting)
-                {
-                    int diff;
-                    // bool isdone;
-                    TblUserPosting userPosting = new TblUserPosting();
-                    var userrole = users.Where(a => a.UserId == item.BetUser).FirstOrDefault().RoleId;
-                    string no = "GW" + item.BetUser + userrole + DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString()
-                            + DateTime.Now.Day.ToString() + DateTime.Now.Hour.ToString() + DateTime.Now.Minute.ToString() + DateTime.Now.Second.ToString();
-
-                    //Check betting is body or goal handicap
-                    //----For body betting-----
-                    if (item.BetOver == false && item.BetUnder == false)
-                    {
-                        int[] body = @string.CutBodyHandicap(item.BetBody);
-                        goalUnitInt = body[0];
-                        unit = body[1];
-
-                        //----Check bet team is over----
-                        if ((item.BetIsHomeOdds == true && item.BetIsHome == true) || (item.BetIsHomeOdds == false && item.BetIsHome == false))
-                        {
-                            if (item.BetIsHome == true)
-                            {
-                                //HomeGoal - AwayGoal
-                                diff = hgoal - agoal;
-                                totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, item.BetAmount);
-                                //Console.WriteLine(totalAmount);
-                            }
-                            else
-                            {
-                                //AwayGoal - HomeGoal
-                                diff = agoal - hgoal;
-                                totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, item.BetAmount);
-                                //Console.WriteLine(totalAmount);
-                            }
-                        }
-                        //----Check bet team is under----
-                        else
-                        {
-                            if (item.BetIsHome == true)
-                            {
-                                //AwayGoal - HomeGoal
-                                diff = agoal - hgoal;
-                                unit *= -1;
-                                totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, item.BetAmount);
-                                //Console.WriteLine(totalAmount);
-                            }
-                            else
-                            {
-                                //HomeGoal - AwayGoal
-                                diff = hgoal - agoal;
-                                unit *= -1;
-                                totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, item.BetAmount);
-                               // Console.WriteLine(totalAmount);
-                            }
-                        }//End of Over or Under 
-                    }
-                    //----For total goal betting-----
-                    else
-                    {
-                        int[] goal = @string.CutBodyHandicap(item.BetGoal);
-                        goalUnitInt = goal[0];
-                        unit = goal[1];
-                        diff = hgoal + agoal;
-                        if (item.BetOver == true)
-                        {
-                            totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, item.BetAmount);
-                            //Console.WriteLine(totalAmount);
-                        }
-                        if (item.BetUnder == true)
-                        {
-                            unit *= -1;
-                            totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, item.BetAmount);
-                            //Console.WriteLine(totalAmount);
-                        }
-                    }//End of body or goal handicap
-
-                    //Save Function and commission calculation function
-                    var isWin = SaveCommonFunc((decimal)item.BetAmount, totalAmount, item.BetGambling, item.BetTeamCount, (decimal)item.BetUser);
-                    bool isa = comm.CalculateCommissionForWinLose(item.BetGambling);
-
-                }//end of foreach loop
-            }//end of one event result
-            return false;
-        }
-
         // Calculation Mix Handicap From Users
-        public void MixCalculation()
+        public IActionResult MixCalculation()
         {
             int diff; int gdiff = 0;
             var isTrue = true;
@@ -925,260 +817,182 @@ namespace Background_Task_Api_Pulling.Controllers
                               BetRapid = d.RapidEventId,
                               BetIsHomeOdds = (bool)d.IsHomeBodyOdd
                           }).ToList();
-
-            var resultGroupBy = from r in result.ToList()
-                                group r by r.BetGambling;
-
-            List<TblGoalResult> goalResults = new List<TblGoalResult>();
-            List<MixHelper> helpers = new List<MixHelper>();
-            List<TblUser> users = new List<TblUser>();
-
-            List<TblUserCommission> commissions = new List<TblUserCommission>();
-            goalResults = db.TblGoalResult.ToList();
-            users = db.TblUser.ToList();
-            commissions = db.TblUserCommission.ToList();
-
-            int balance = 0; decimal _userId = 0; int _count = 0;
-            foreach (var info in resultGroupBy)
+            if (result.Count != 0)
             {
-                var @id = info.Key;
-                List<Details> details = new List<Details>();
-                foreach (BetInfo r in info)
+                var resultGroupBy = from r in result.ToList()
+                                    group r by r.BetGambling;
+
+                List<TblGoalResult> goalResults = new List<TblGoalResult>();
+                List<MixHelper> helpers = new List<MixHelper>();
+                List<TblUser> users = new List<TblUser>();
+
+                List<TblUserCommission> commissions = new List<TblUserCommission>();
+                goalResults = db.TblGoalResult.ToList();
+                users = db.TblUser.ToList();
+                commissions = db.TblUserCommission.ToList();
+
+                int balance = 0; decimal _userId = 0; int _count = 0;
+                foreach (var info in resultGroupBy)
                 {
-                    if (isTrue)
+                    var @id = info.Key;
+                    List<Details> details = new List<Details>();
+                    foreach (BetInfo r in info)
                     {
-                        balance = (int)r.BetAmount;
-                        _userId = (decimal)r.BetUser;
-                        _count = r.BetTeamCount;
-                        var isFinished = goalResults.Any(a => Decimal.Parse(a.RapidEventId) == r.BetRapid);
-                        if (isFinished)
+                        if (isTrue)
                         {
-                            details.Add(new Details
+                            balance = (int)r.BetAmount;
+                            _userId = (decimal)r.BetUser;
+                            _count = r.BetTeamCount;
+                            var isFinished = goalResults.Any(a => Decimal.Parse(a.RapidEventId) == r.BetRapid);
+                            if (isFinished)
                             {
-                                GoalOdd = r.BetBody,
-                                BodyOdd = r.BetBody,
-                                Overs = r.BetOver,
-                                Under = r.BetUnder,
-                                HomeResult = (int)goalResults.Where(a => Decimal.Parse(a.RapidEventId) == r.BetRapid).FirstOrDefault().HomeResult,
-                                AwayResult = (int)goalResults.Where(a => Decimal.Parse(a.RapidEventId) == r.BetRapid).FirstOrDefault().AwayResult,
-                                IsHome = r.BetIsHome,
-                                IsHomeBodyOdds = r.BetIsHomeOdds,
-                                RapidEventId = r.BetRapid,
-                                GamblingId = r.BetGambling,
-                                FootballTeamId = r.BetTeam
-                            }); ;
-                        }
-                        else
-                        {
-                            isTrue = isFinished;
-                        }
-                    }
-                }
-                if (isTrue)
-                {
-                    helpers.Add(new MixHelper
-                    {
-                        GamblingId = id,
-                        Amount = balance,
-                        User = _userId,
-                        Count = _count,
-                        Details = details
-                    });
-                }
-                else
-                {
-                    details.Clear();
-                    isTrue = true;
-                }
-            }
-            foreach (var data in helpers)
-            {
-                StringConcat @string = new StringConcat();
-                Betting bettingCal = new Betting();
-                var userrole = users.Where(a => a.UserId == data.User).FirstOrDefault().RoleId;
-                string no = "GW" + data.User + userrole + DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString()
-                           + DateTime.Now.Day.ToString() + DateTime.Now.Hour.ToString() + DateTime.Now.Minute.ToString()
-                           + DateTime.Now.Second.ToString();
-
-                int goalUnitInt = 0;
-                decimal unit = 0;
-                decimal totalAmount = 0;
-                decimal originalAmount = data.Amount;
-                int winningAmount = data.Amount;
-                foreach (var @item in data.Details)
-                {
-                    if (isWin == true)
-                    {
-
-                        //Check betting is body or goal handicap
-                        //----For body betting-----
-                        if (@item.Overs == false && @item.Under == false)
-                        {
-                            int[] body = @string.CutBodyHandicap(@item.BodyOdd);
-                            goalUnitInt = body[0];
-                            unit = body[1];
-                            // var tempOver = db.TblMyanHandicapResult.ToList().Any(a => a.OverTeamId == @item.FootballTeamId && a.RapidEventId == item.RapidEventId);
-
-                            //----Check bet team is over----
-                            if ((item.IsHomeBodyOdds == true && item.IsHome == true) || (item.IsHome == false && item.IsHomeBodyOdds == false))
-                            {
-                                if ((bool)@item.IsHome)
+                                var h_goal = (int)goalResults.Where(a => Decimal.Parse(a.RapidEventId) == r.BetRapid).FirstOrDefault().HomeResult;
+                                var a_goal = (int)goalResults.Where(a => Decimal.Parse(a.RapidEventId) == r.BetRapid).FirstOrDefault().AwayResult;
+                                details.Add(new Details
                                 {
-                                    //HomeGoal - AwayGoal
-                                    diff = @item.HomeResult - @item.AwayResult;
-                                    totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, winningAmount);
-                                    Console.WriteLine(totalAmount);
-                                }
-                                else
-                                {
-                                    //AwayGoal - HomeGoal
-                                    diff = @item.AwayResult - @item.HomeResult;
-                                    totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, winningAmount);
-                                    Console.WriteLine(totalAmount);
-                                }
+                                    GoalOdd = r.BetBody,
+                                    BodyOdd = r.BetBody,
+                                    Overs = r.BetOver,
+                                    Under = r.BetUnder,
+                                    HomeResult = h_goal,
+                                    AwayResult =a_goal,
+                                    IsHome = r.BetIsHome,
+                                    IsHomeBodyOdds = r.BetIsHomeOdds,
+                                    RapidEventId = r.BetRapid,
+                                    GamblingId = r.BetGambling,
+                                    FootballTeamId = r.BetTeam
+                                }); 
                             }
-                            //----Check bet team is under----
                             else
                             {
-                                if ((bool)@item.IsHome)
-                                {
-                                    //AwayGoal - HomeGoal
-                                    diff = @item.AwayResult - @item.HomeResult;
-                                    unit *= -1;
-                                    totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, winningAmount);
-                                    Console.WriteLine(totalAmount);
-
-                                }
-                                else
-                                {
-                                    //HomeGoal - AwayGoal
-                                    diff = @item.HomeResult - @item.AwayResult;
-                                    unit *= -1;
-                                    totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, winningAmount);
-                                    Console.WriteLine(totalAmount);
-                                }
-                            }//End of Over or Under 
-
+                                isTrue = isFinished;
+                            }
                         }
-                        //----For total goal betting-----
-                        else
+                    }
+                    if (isTrue)
+                    {
+                        helpers.Add(new MixHelper
                         {
-                            gdiff = item.AwayResult + item.HomeResult;
-                            int[] goal = @string.CutBodyHandicap(@item.GoalOdd);
-                            goalUnitInt = goal[0];
-                            unit = goal[1];
-                            if (@item.Overs == true)
-                            {
-                                totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, gdiff, unit, winningAmount);
-                                Console.WriteLine(totalAmount);
-                            }
-                            if (@item.Under == true)
-                            {
-                                unit *= -1;
-                                totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, gdiff, unit, winningAmount);
-                                Console.WriteLine(totalAmount);
-                            }
-
-                        }//End of body or goal handicap 
-                        if (totalAmount == 0) { isWin = false; }
-                        winningAmount = Convert.ToInt32(totalAmount);
+                            GamblingId = id,
+                            Amount = balance,
+                            User = _userId,
+                            Count = _count,
+                            Details = details
+                        });
+                    }
+                    else
+                    {
+                        details.Clear();
+                        isTrue = true;
                     }
                 }
-                //End of gambling details
+                foreach (var data in helpers)
+                {
+                    StringConcat @string = new StringConcat();
+                    Betting bettingCal = new Betting();
+                  //  var userrole = users.Where(a => a.UserId == data.User).FirstOrDefault().RoleId;
+                  //  string no = "GW" + data.User + userrole + DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString()
+                              // + DateTime.Now.Day.ToString() + DateTime.Now.Hour.ToString() + DateTime.Now.Minute.ToString()
+                             //  + DateTime.Now.Second.ToString();
 
-                //Save Function and commission calculation function
-                isWin = SaveCommonFunc(originalAmount, winningAmount, data.GamblingId, data.Count, data.User);
-                bool os = comm.CalculateCommissionForWinLose(data.GamblingId);
-                Console.WriteLine("Complete 1");
+                    int goalUnitInt = 0;
+                    decimal unit = 0;
+                    decimal totalAmount = 0;
+                    decimal originalAmount = data.Amount;
+                    int winningAmount = data.Amount;
+                    foreach (var @item in data.Details)
+                    {
+                        if (isWin == true)
+                        {
+                            if (@item.HomeResult != -1 && item.AwayResult != -1)
+                            {
+                                //Check betting is body or goal handicap
+                                //----For body betting-----
+                                if (@item.Overs == false && @item.Under == false)
+                                {
+                                    int[] body = @string.CutBodyHandicap(@item.BodyOdd);
+                                    goalUnitInt = body[0];
+                                    unit = body[1];
+
+                                    //----Check bet team is over----
+                                    if ((item.IsHomeBodyOdds == true && item.IsHome == true) || (item.IsHome == false && item.IsHomeBodyOdds == false))
+                                    {
+                                        if ((bool)@item.IsHome)
+                                        {
+                                            //HomeGoal - AwayGoal
+                                            diff = @item.HomeResult - @item.AwayResult;
+                                            totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, winningAmount);
+                                            //Console.WriteLine(totalAmount);
+                                        }
+                                        else
+                                        {
+                                            //AwayGoal - HomeGoal
+                                            diff = @item.AwayResult - @item.HomeResult;
+                                            totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, winningAmount);
+                                            //Console.WriteLine(totalAmount);
+                                        }
+                                    }
+                                    //----Check bet team is under----
+                                    else
+                                    {
+                                        if ((bool)@item.IsHome)
+                                        {
+                                            //AwayGoal - HomeGoal
+                                            diff = @item.AwayResult - @item.HomeResult;
+                                            unit *= -1;
+                                            totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, winningAmount);
+                                            //Console.WriteLine(totalAmount);
+
+                                        }
+                                        else
+                                        {
+                                            //HomeGoal - AwayGoal
+                                            diff = @item.HomeResult - @item.AwayResult;
+                                            unit *= -1;
+                                            totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, winningAmount);
+                                            //Console.WriteLine(totalAmount);
+                                        }
+                                    }//End of Over or Under 
+
+                                }
+                                //----For total goal betting-----
+                                else
+                                {
+                                    gdiff = item.AwayResult + item.HomeResult;
+                                    int[] goal = @string.CutBodyHandicap(@item.GoalOdd);
+                                    goalUnitInt = goal[0];
+                                    unit = goal[1];
+                                    if (@item.Overs == true)
+                                    {
+                                        totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, gdiff, unit, winningAmount);
+                                        //Console.WriteLine(totalAmount);
+                                    }
+                                    if (@item.Under == true)
+                                    {
+                                        unit *= -1;
+                                        totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, gdiff, unit, winningAmount);
+                                        // Console.WriteLine(totalAmount);
+                                    }
+
+                                }//End of body or goal handicap 
+                            }
+                            else
+                            {
+                                totalAmount = winningAmount;
+                            }
+                            if (totalAmount == 0) { isWin = false; winningAmount = 0; }
+                            else { winningAmount = Convert.ToInt32(totalAmount); }
+                        }
+                    }
+                    //End of gambling details
+
+                    //Save Function and commission calculation function
+                    isWin = SaveCommonFunc(originalAmount, winningAmount, data.GamblingId, data.Count, data.User);
+                    bool os = comm.CalculateCommissionForWinLose(data.GamblingId);
+                    Console.WriteLine("Complete 1");
+                }
             }
-        }
-
-        //Save Method For Mix and Body Calculation
-        public bool SaveCommonFunc(decimal og, decimal wa, decimal gid, int c, decimal uid)
-        {
-            bool result = false;
-            var maxAmount = og;
-            List<TblUser> users = new List<TblUser>();
-            List<TblGambling> tblGamblings = new List<TblGambling>();
-            users = db.TblUser.ToList();
-            tblGamblings = db.TblGambling.Where(a => a.Active == true).ToList();
-            var userrole = users.Where(a => a.UserId == uid).FirstOrDefault().RoleId;
-            string no = "GW" + uid + userrole + DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString()
-                       + DateTime.Now.Day.ToString() + DateTime.Now.Hour.ToString() + DateTime.Now.Minute.ToString()
-                       + DateTime.Now.Second.ToString();
-            for (int i = 1; i <= c; i++)
-            {
-                maxAmount *= 2;
-            }
-
-            decimal tempdata = Math.Round((wa / maxAmount) * 100, 2);
-            TblUserPosting userPosting = new TblUserPosting();
-            TblUserPosting userPosting_parent = new TblUserPosting();
-            TblGamblingWin gamblingWin = new TblGamblingWin();
-
-            var parentUser = users.Where(a => a.UserId == uid).First().CreatedBy;
-            if (wa >= og)
-            {
-                gamblingWin.WinAmount = wa;
-                gamblingWin.LoseAmount = 0;
-                gamblingWin.Wlpercent = tempdata;
-            }
-            else
-            {
-                gamblingWin.WinAmount = 0;
-                gamblingWin.LoseAmount = og;
-                gamblingWin.Wlpercent = tempdata;
-            }
-            gamblingWin.Active = true;
-            gamblingWin.GamblingId = gid;
-            gamblingWin.GamblingTypeId = 2;
-            gamblingWin.UserId = uid;
-            gamblingWin.GoalResultId = 0;
-            gamblingWin.BetAmount = og;
-            db.TblGamblingWin.Add(gamblingWin);
-            db.SaveChanges();
-
-            if (wa != 0)
-            {
-                userPosting.Inward = wa;
-                userPosting.Outward = 0;
-                userPosting.TransactionTypeId = 7;
-                userPosting_parent.Inward = 0;
-                userPosting_parent.Outward = wa;
-                userPosting_parent.TransactionTypeId = 8;
-            }
-            else
-            {
-                userPosting.Inward = 0;
-                userPosting.Outward = og;
-                userPosting.TransactionTypeId = 8;
-                userPosting_parent.Inward = og;
-                userPosting_parent.Outward = 0;
-                userPosting_parent.TransactionTypeId = 7;
-                result = true;
-            }
-            userPosting.Active = true;
-            userPosting.CreatedBy = uid;
-            userPosting.CreatedDate = DateTime.Now;
-            userPosting.PostingNo = no;
-            userPosting.UserId = uid;
-            userPosting.GamblingId = gid;
-            db.TblUserPosting.Add(userPosting);
-            db.SaveChanges();
-
-            userPosting_parent.Active = true;
-            userPosting_parent.CreatedBy = uid;
-            userPosting_parent.CreatedDate = DateTime.Now;
-            userPosting_parent.PostingNo = no;
-            userPosting_parent.GamblingId = gid;
-            userPosting_parent.UserId = parentUser;
-            db.TblUserPosting.Add(userPosting_parent);
-            db.SaveChanges();
-
-            var gamId = tblGamblings.Where(a => a.GamblingId == gid).FirstOrDefault();
-            gamId.Active = false;
-            db.SaveChanges();
-            return result;
+            return View();
         }
 
         //Fetch and Update Handicap From PreUpcomming Table
@@ -1249,6 +1063,265 @@ namespace Background_Task_Api_Pulling.Controllers
             {
                 Console.WriteLine(ex.Message);
             }
+        }
+
+        //-----------------------------------------------------------Call Back Methods-------------------
+
+        // Calculation Body Handicap From Users
+        public bool BodyCalculation(int hgoal, int agoal, decimal rapid)
+        {
+            StringConcat @string = new StringConcat();
+            Betting bettingCal = new Betting();
+            CalculateComm comm = new CalculateComm();
+            List<TblUser> users = new List<TblUser>();
+            users = db.TblUser.ToList();
+            int goalUnitInt = 0;
+            decimal unit = 0;
+            decimal totalAmount = 0;
+            var betting = (from g in db.TblGambling
+                           join d in db.TblGamblingDetails
+                           on g.GamblingId equals d.GamblingId
+                           where d.RapidEventId == rapid
+                           where g.Active == true/*&& g.CreatedDate.Value.Date == DateTime.Now.Date*/ && g.GamblingTypeId == 1
+                           select new BetInfo
+                           {
+                               BetType = g.GamblingTypeId,
+                               BetGambling = g.GamblingId,
+                               BetTeamCount = (int)g.TeamCount,
+                               BetTeam = (decimal)d.FootballTeamId,
+                               BetOver = (bool)d.Overs,
+                               BetUnder = (bool)d.Under,
+                               BetIsHome = d.IsHome,
+                               BetAmount = g.Amount,
+                               BetBody = d.BodyOdd,
+                               BetGoal = d.GoalOdd,
+                               BetUser = g.UserId,
+                               BetIsHomeOdds = (bool)d.IsHomeBodyOdd
+                           }).ToList();
+            if (betting.Count != 0)
+            {
+                foreach (var item in betting)
+                {
+                    int diff;
+                    //Check event is postponed or cancelled
+                    if (hgoal != -1 && agoal != -1)
+                    {
+                        //Check betting is body or goal betting
+                        //----For body betting-----
+                        if (item.BetOver == false && item.BetUnder == false)
+                        {
+                            int[] body = @string.CutBodyHandicap(item.BetBody);
+                            goalUnitInt = body[0];
+                            unit = body[1];
+
+                            //----Check bet team is over----
+                            if ((item.BetIsHomeOdds == true && item.BetIsHome == true) || (item.BetIsHomeOdds == false && item.BetIsHome == false))
+                            {
+                                if (item.BetIsHome == true)
+                                {
+                                    //HomeGoal - AwayGoal
+                                    diff = hgoal - agoal;
+                                    totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, item.BetAmount);
+                                    //Console.WriteLine(totalAmount);
+                                }
+                                else
+                                {
+                                    //AwayGoal - HomeGoal
+                                    diff = agoal - hgoal;
+                                    totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, item.BetAmount);
+                                    //Console.WriteLine(totalAmount);
+                                }
+                            }
+                            //----Check bet team is under----
+                            else
+                            {
+                                if (item.BetIsHome == true)
+                                {
+                                    //AwayGoal - HomeGoal
+                                    diff = agoal - hgoal;
+                                    unit *= -1;
+                                    totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, item.BetAmount);
+                                    //Console.WriteLine(totalAmount);
+                                }
+                                else
+                                {
+                                    //HomeGoal - AwayGoal
+                                    diff = hgoal - agoal;
+                                    unit *= -1;
+                                    totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, item.BetAmount);
+                                    // Console.WriteLine(totalAmount);
+                                }
+                            }//End of Over or Under 
+                        }
+                        //----For total goal betting-----
+                        else
+                        {
+                            int[] goal = @string.CutBodyHandicap(item.BetGoal);
+                            goalUnitInt = goal[0];
+                            unit = goal[1];
+                            diff = hgoal + agoal;
+                            if (item.BetOver == true)
+                            {
+                                totalAmount = bettingCal.WinOrLoseOver(goalUnitInt, diff, unit, item.BetAmount);
+                                //Console.WriteLine(totalAmount);
+                            }
+                            if (item.BetUnder == true)
+                            {
+                                unit *= -1;
+                                totalAmount = bettingCal.WinOrLoseUnder(goalUnitInt, diff, unit, item.BetAmount);
+                                //Console.WriteLine(totalAmount);
+                            }
+                        }//End of body or goal betting
+
+                        //Save Function and commission calculation function
+                        var isWin = SaveCommonFunc((decimal)item.BetAmount, totalAmount, item.BetGambling, item.BetTeamCount, (decimal)item.BetUser);
+                        bool isa = comm.CalculateCommissionForWinLose(item.BetGambling);
+                    }
+                    else
+                    {
+                        var isWin = SavePostponedFunc((decimal)item.BetAmount, item.BetGambling, (decimal)item.BetUser);
+                    }//End of event is postponed check
+                }//end of foreach loop
+            }//end of one event result
+            return false;
+        }
+
+        //Save Method For Mix and Body Calculation
+        public bool SaveCommonFunc(decimal og, decimal wa, decimal gid, int c, decimal uid)
+        {
+            bool result = false;
+            var maxAmount = og;
+            List<TblUser> users = new List<TblUser>();
+            List<TblGambling> tblGamblings = new List<TblGambling>();
+            users = db.TblUser.ToList();
+            tblGamblings = db.TblGambling.Where(a => a.Active == true).ToList();
+            DateTime today= DateTime.Now.AddHours(6).AddMinutes(30);
+            var userrole = users.Where(a => a.UserId == uid).FirstOrDefault().RoleId;
+            string no = "GW" + uid + userrole + today.Year.ToString() + today.Month.ToString()
+                        + today.Day.ToString() + today.Hour.ToString() + today.Minute.ToString()
+                        + today.Second.ToString();
+            for (int i = 1; i <= c; i++)
+            {
+                maxAmount *= 2;
+            }
+
+            decimal tempdata = Math.Round((wa / maxAmount) * 100, 2);
+            TblUserPosting userPosting = new TblUserPosting();
+            TblUserPosting userPosting_parent = new TblUserPosting();
+            TblGamblingWin gamblingWin = new TblGamblingWin();
+
+            var parentUser = users.Where(a => a.UserId == uid).First().CreatedBy;
+            if (wa >= og)
+            {
+                gamblingWin.WinAmount = wa;
+                gamblingWin.LoseAmount = 0;
+                gamblingWin.Wlpercent = tempdata;
+            }
+            else
+            {
+                gamblingWin.WinAmount = 0;
+                gamblingWin.LoseAmount = og;
+                gamblingWin.Wlpercent = tempdata;
+            }
+            gamblingWin.Active = true;
+            gamblingWin.GamblingId = gid;
+            gamblingWin.GamblingTypeId = 2;
+            gamblingWin.UserId = uid;
+            gamblingWin.GoalResultId = 0;
+            gamblingWin.BetAmount = og;
+            db.TblGamblingWin.Add(gamblingWin);
+            db.SaveChanges();
+
+            if (wa != 0)
+            {
+                userPosting.Inward = wa;
+                userPosting.Outward = 0;
+                userPosting.TransactionTypeId = 7;
+                userPosting_parent.Inward = 0;
+                userPosting_parent.Outward = wa;
+                userPosting_parent.TransactionTypeId = 8;
+            }
+            else
+            {
+                userPosting.Inward = 0;
+                userPosting.Outward = og;
+                userPosting.TransactionTypeId = 8;
+                userPosting_parent.Inward = og;
+                userPosting_parent.Outward = 0;
+                userPosting_parent.TransactionTypeId = 7;
+                result = true;
+            }
+            userPosting.Active = true;
+            userPosting.CreatedBy = uid;
+            userPosting.CreatedDate = today;
+            userPosting.PostingNo = no;
+            userPosting.UserId = uid;
+            userPosting.GamblingId = gid;
+            db.TblUserPosting.Add(userPosting);
+            db.SaveChanges();
+
+            userPosting_parent.Active = true;
+            userPosting_parent.CreatedBy = uid;
+            userPosting_parent.CreatedDate = today;
+            userPosting_parent.PostingNo = no;
+            userPosting_parent.GamblingId = gid;
+            userPosting_parent.UserId = parentUser;
+            db.TblUserPosting.Add(userPosting_parent);
+            db.SaveChanges();
+
+            var gamId = tblGamblings.Where(a => a.GamblingId == gid).FirstOrDefault();
+            gamId.Active = false;
+            db.SaveChanges();
+            return result;
+        }
+
+        //Save Method For Event is PostPoned or Cancelled
+        public bool SavePostponedFunc(decimal og,decimal gid, decimal uid)
+        {
+            bool result = false;
+            List<TblUser> users = new List<TblUser>();
+            List<TblGambling> tblGamblings = new List<TblGambling>();
+            users = db.TblUser.ToList();
+            tblGamblings = db.TblGambling.Where(a => a.Active == true).ToList();
+            DateTime today = DateTime.Now.AddHours(6).AddMinutes(30);
+            var userrole = users.Where(a => a.UserId == uid).FirstOrDefault().RoleId;
+            string no = "GW" + uid + userrole + today.Year.ToString() + today.Month.ToString()
+                        + today.Day.ToString() + today.Hour.ToString() + today.Minute.ToString()
+                        + today.Second.ToString();
+           
+            TblUserPosting userPosting = new TblUserPosting();
+            TblUserPosting userPosting_parent = new TblUserPosting();
+
+            var parentUser = users.Where(a => a.UserId == uid).First().CreatedBy;
+
+            userPosting.Inward = og;
+            userPosting.Outward = 0;
+            userPosting.TransactionTypeId = 7;
+            userPosting.Active = true;
+            userPosting.CreatedBy = uid;
+            userPosting.CreatedDate = today;
+            userPosting.PostingNo = no;
+            userPosting.UserId = uid;
+            userPosting.GamblingId = gid;
+            db.TblUserPosting.Add(userPosting);
+            db.SaveChanges();
+
+            userPosting_parent.Inward = 0;
+            userPosting_parent.Outward = og;
+            userPosting_parent.TransactionTypeId = 8;
+            userPosting_parent.Active = true;
+            userPosting_parent.CreatedBy = uid;
+            userPosting_parent.CreatedDate = today;
+            userPosting_parent.PostingNo = no;
+            userPosting_parent.GamblingId = gid;
+            userPosting_parent.UserId = parentUser;
+            db.TblUserPosting.Add(userPosting_parent);
+            db.SaveChanges();
+
+            var gamId = tblGamblings.Where(a => a.GamblingId == gid).FirstOrDefault();
+            gamId.Active = false;
+            db.SaveChanges();
+            return result;
         }
     }
 }

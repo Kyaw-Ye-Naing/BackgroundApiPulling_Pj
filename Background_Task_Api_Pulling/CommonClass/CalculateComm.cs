@@ -119,6 +119,35 @@ namespace Background_Task_Api_Pulling.CommonClass
             calculated.defaultCom = defaultCommsiionPercent;
             _spReport.SaveCalculatedCommissionData(calculated);
 
+            //while (dtUpUser.Rows.Count > 0)
+            //{
+            //    calculated.postingNo = voucherNo;
+
+            //    calculated.subUserId = userId;//under user
+            //    calculated.subRoleId = userRoleId;
+            //    calculated.subWL = userWL;
+            //    calculated.subCom = Convert.ToDecimal(dtUpUser.Rows[0]["subUserCommission"].ToString());
+            //    calculated.subWL_PM = calculated.subWL + calculated.subCom;
+
+            //    calculated.userId = upUserId;//view user
+            //    calculated.userRoleId = upRoleId;
+            //    calculated.userWL = 0;
+            //    calculated.userCom = CalCommissionAmount(betAmount, Convert.ToDecimal(dtUpUser.Rows[0]["userCommission"].ToString()) -
+            //                         Convert.ToDecimal(dtUpUser.Rows[0]["subUserCommission"].ToString()));
+            //    calculated.userWL_PM = calculated.userWL + calculated.userCom;
+
+            //    dtUpUser = new DataTable();
+            //    dtUpUser = _spReport.FindCreatedUserAndCommission(calculated.userId, commissionTypeId);
+
+            //    calculated.upUserId = dtUpUser.Rows.Count > 0 ? Convert.ToDecimal(dtUpUser.Rows[0]["userId"].ToString()) : 0; ;
+            //    calculated.upRoleId = dtUpUser.Rows.Count > 0 ? int.Parse(dtUpUser.Rows[0]["roleId"].ToString()) : 0;
+            //    calculated.upWL = dtUpUser.Rows.Count > 0 ? isWin ? betWinLoseAmount * -1 : betWinLoseAmount : 0;
+            //    calculated.upCom = dtUpUser.Rows.Count > 0 ? calculated.userCom * -1 : 0;
+            //    calculated.upWL_PM = dtUpUser.Rows.Count > 0 ? calculated.upWL + calculated.upCom : 0;
+            //    _spReport.SaveCalculatedCommissionData(calculated);
+
+
+            //}
             while (dtUpUser.Rows.Count > 0)
             {
                 calculated.postingNo = voucherNo;
@@ -136,15 +165,24 @@ namespace Background_Task_Api_Pulling.CommonClass
                                      Convert.ToDecimal(dtUpUser.Rows[0]["subUserCommission"].ToString()));
                 calculated.userWL_PM = calculated.userWL + calculated.userCom;
 
-                dtUpUser = new DataTable();
+                dtUpUser.Rows.Clear();//edit akn 5-1-2020
                 dtUpUser = _spReport.FindCreatedUserAndCommission(calculated.userId, commissionTypeId);
 
-                calculated.upUserId = dtUpUser.Rows.Count > 0 ? Convert.ToDecimal(dtUpUser.Rows[0]["userId"].ToString()) : 0; ;
+                calculated.upUserId = dtUpUser.Rows.Count > 0 ? Convert.ToDecimal(dtUpUser.Rows[0]["userId"].ToString()) : 0;
                 calculated.upRoleId = dtUpUser.Rows.Count > 0 ? int.Parse(dtUpUser.Rows[0]["roleId"].ToString()) : 0;
                 calculated.upWL = dtUpUser.Rows.Count > 0 ? isWin ? betWinLoseAmount * -1 : betWinLoseAmount : 0;
                 calculated.upCom = dtUpUser.Rows.Count > 0 ? calculated.userCom * -1 : 0;
                 calculated.upWL_PM = dtUpUser.Rows.Count > 0 ? calculated.upWL + calculated.upCom : 0;
                 _spReport.SaveCalculatedCommissionData(calculated);
+
+                //add new akn 5-1-2020
+                userId = calculated.userId;
+                userRoleId = calculated.userRoleId;
+                userWL = dtUpUser.Rows.Count > 0 ? isWin ? betWinLoseAmount : betWinLoseAmount * -1 : 0;
+
+                upUserId = calculated.upUserId;
+                upRoleId = calculated.upRoleId;
+                //add new akn 5-1-2020
             }
 
             // add here user repaid for win lose logic
