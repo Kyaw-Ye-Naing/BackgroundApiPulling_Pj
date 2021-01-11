@@ -29,7 +29,7 @@ namespace Background_Task_Api_Pulling.Controllers
         {
             RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Hourly);
             RecurringJob.AddOrUpdate(() => MixCalculation(), Cron.Hourly);
-            RecurringJob.AddOrUpdate(() => GetData(), "0 */12 * * *");
+            RecurringJob.AddOrUpdate(() => GetData(), "0 */6 * * *");
 
             //BackgroundJob.Schedule(() => PublishMessage(), TimeSpan.FromMilliseconds(2000));
             // RecurringJob.AddOrUpdate(() => Test1(), "*/15 * * * *");
@@ -592,18 +592,19 @@ namespace Background_Task_Api_Pulling.Controllers
                         var lastName = "";
                         var dd = data1.results[ii].league.name;
 
-                        //if (dd != null && dd != "")
-                        //{
-                        //    var tmpArr = dd.Split(" ");
-                        //    lastName = tmpArr[tmpArr.Count() - 1];
-                        //}
-                        //if (lastName.Equals("play"))
-                        //{
-                        //    Console.WriteLine("This is Esports data");
-                        //}
+                        if (dd != null && dd != "")
+                        {
+                            var tmpArr = dd.Split(" ");
+                            lastName = tmpArr[tmpArr.Count() - 1];
+                        }
+                        if (lastName.Equals("play"))
+                        {
+                           // Console.WriteLine("This is Esports data");
+                        }
                         //if (dd.Equals("England Premier League") || dd.Equals("England Championship") || dd.Equals("Germany Bundesliga I") ||
                         //   dd.Equals("Italy Serie A") || dd.Equals("France Ligue 2"))   dd.Equals("Spain Primera Liga")
-                        if (dd.Equals("England Premier League"))
+                        //if (dd.Equals("England Premier League"))
+                        else
                         {
                             //Fetch  Odds data from RapidApI 
                             eventId = data1.results[ii].id;
