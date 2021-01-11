@@ -31,7 +31,7 @@ namespace Background_Task_Api_Pulling.Controllers
             //RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Minutely);
             //BackgroundJob.Schedule(() => PublishMessage(), TimeSpan.FromMilliseconds(2000));
             //RecurringJob.AddOrUpdate(() => GetData(),Cron.HourInterval(6));
-            //RecurringJob.AddOrUpdate(() => GetData(), Cron.Minutely);
+            RecurringJob.AddOrUpdate(() => GetData(), Cron.Minutely);
             //RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.HourInterval(5));
             //RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Hourly);
             //RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Hourly);
