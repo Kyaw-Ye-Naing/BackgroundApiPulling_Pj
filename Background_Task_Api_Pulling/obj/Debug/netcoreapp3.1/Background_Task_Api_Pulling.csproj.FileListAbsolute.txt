@@ -1229,9 +1229,6 @@ C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Back
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.TagHelpers.output.cache
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.RazorCoreGenerate.cache
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Razor\Views\Home\Index.cshtml.g.cs
-C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Razor\Views\Home\Privacy.cshtml.g.cs
-C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Razor\Views\Home\Privacy2.cshtml.g.cs
-C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Razor\Views\Home\Privacy4.cshtml.g.cs
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Razor\Views\Shared\Error.cshtml.g.cs
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Razor\Views\Shared\_Layout.cshtml.g.cs
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Razor\Views\Shared\_ValidationScriptsPartial.cshtml.g.cs
@@ -1246,3 +1243,4 @@ C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Back
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.dll
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.pdb
 C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.genruntimeconfig.cache
+C:\Users\Lenovo\Desktop\Background_Task_Api_Pulling\BackgroundApiPulling_Pj\Background_Task_Api_Pulling\obj\Debug\netcoreapp3.1\Background_Task_Api_Pulling.csprojAssemblyReference.cache

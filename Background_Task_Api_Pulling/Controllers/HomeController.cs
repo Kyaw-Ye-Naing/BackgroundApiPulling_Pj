@@ -25,22 +25,18 @@ namespace Background_Task_Api_Pulling.Controllers
             clsPublicVariable.connectionString = configuration.GetConnectionString("DefaultConnection");
         }
 
-        //[Obsolete]
         public IActionResult Index()
         {
-            //RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Minutely);
-            //BackgroundJob.Schedule(() => PublishMessage(), TimeSpan.FromMilliseconds(2000));
-            //RecurringJob.AddOrUpdate(() => GetData(),Cron.HourInterval(6));
-            RecurringJob.AddOrUpdate(() => GetData(), Cron.Minutely);
-            //RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.HourInterval(5));
-            //RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Hourly);
-            //RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Hourly);
-            //RecurringJob.AddOrUpdate(()=>UpdateHandicapFromPre(),Cron.Minutely);
-            //RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Minutely);
-            //RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Minutely);
-            //RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Minutely);
+            RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Hourly);
+            RecurringJob.AddOrUpdate(() => MixCalculation(), Cron.Hourly);
+            RecurringJob.AddOrUpdate(() => GetData(), "0 */12 * * *");
 
-            // RecurringJob.AddOrUpdate(() => MixCalculation(), Cron.Minutely);
+            //BackgroundJob.Schedule(() => PublishMessage(), TimeSpan.FromMilliseconds(2000));
+            // RecurringJob.AddOrUpdate(() => Test1(), "*/15 * * * *");
+            //RecurringJob.AddOrUpdate(()=>UpdateHandicapFromPre(),Cron.Minutely);
+            RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Hourly);
+            RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Hourly);
+            RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Hourly);
             return View();
         }
 
@@ -498,7 +494,7 @@ namespace Background_Task_Api_Pulling.Controllers
         }
 
         //Fetch Goals Result Data From RapidAPI
-        public IActionResult GetGoals()
+        public void GetGoals()
         {
             //Filtering with today date
             var eventId = db.TblPreUpcomingEvent.Where(a => a.Active == true).ToList();
@@ -506,7 +502,7 @@ namespace Background_Task_Api_Pulling.Controllers
             foreach (var c in eventId)
             {
                 var ftValue = goals.Any(a => Decimal.Parse(a.RapidEventId) == c.RapidEventId);
-                if (ftValue != true)
+                if (ftValue == false)
                 {
                     //Record not exist
                     //Data fetch from API
@@ -524,7 +520,7 @@ namespace Background_Task_Api_Pulling.Controllers
                     if (status == 3)
                     {
                         TblGoalResult goalResult = new TblGoalResult();
-                      
+
                         var golArr = data.results[0].ss.Split("-");
                         goalResult.RapidEventId = c.RapidEventId.ToString();
                         goalResult.UpcomingEventId = c.PreUpcommingEventId;
@@ -534,8 +530,8 @@ namespace Background_Task_Api_Pulling.Controllers
                         goalResult.EventDatetime = dt;
                         db.TblGoalResult.Add(goalResult);
                         db.SaveChanges();
-                      //  BodyCalculation(Convert.ToInt32(golArr[0]), Convert.ToInt32(golArr[1]), (decimal)c.RapidEventId);
-                       // Console.WriteLine("Complete 1 Body");
+                        //  BodyCalculation(Convert.ToInt32(golArr[0]), Convert.ToInt32(golArr[1]), (decimal)c.RapidEventId);
+                        // Console.WriteLine("Complete 1 Body");
                     }
                     else if (status == 4 || status == 5)
                     {
@@ -548,14 +544,12 @@ namespace Background_Task_Api_Pulling.Controllers
                         goalResult.EventDatetime = dt;
                         db.TblGoalResult.Add(goalResult);
                         db.SaveChanges();
-                       // BodyCalculation(-1, -1, (decimal)c.RapidEventId);
+                        // BodyCalculation(-1, -1, (decimal)c.RapidEventId);
                         //Console.WriteLine("Complete 1 Body");
                     }
-                }
-                else { //Console.WriteLine("Record exists"); 
-                }
+                }        
             }//end of foreach loop
-            return View();
+            //return View();
         }
 
         //Fetch data from API
@@ -791,7 +785,7 @@ namespace Background_Task_Api_Pulling.Controllers
         }
 
         // Calculation Mix Handicap From Users
-        public IActionResult MixCalculation()
+        public void MixCalculation()
         {
             int diff; int gdiff = 0;
             var isTrue = true;
@@ -992,77 +986,208 @@ namespace Background_Task_Api_Pulling.Controllers
                     Console.WriteLine("Complete 1");
                 }
             }
-            return View();
+            //return View();
         }
 
         //Fetch and Update Handicap From PreUpcomming Table
         public void UpdateHandicapFromPre()
         {
-            try
-            {
-                //Filtering with today date
-                var eventId = db.TblPreUpcomingEvent.Where(a => a.Active == true).ToList();
-                if (eventId.Count != 0)
-                {
-                    foreach (var c in eventId)
-                    {
-                        var resultString = String.Concat("https://betsapi2.p.rapidapi.com/v3/bet365/prematch?FI=", 95949312);
-                        var client2 = new RestClient(resultString);
-                        var request2 = new RestRequest(Method.GET);
-                        request2.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
-                        request2.AddHeader("x-rapidapi-host", "betsapi2.p.rapidapi.com");
-                        IRestResponse response2 = client2.Execute(request2);
-                        Odds data2 = JsonConvert.DeserializeObject<Odds>(response2.Content);
-                        Handicap data5 = JsonConvert.DeserializeObject<Handicap>(response2.Content);
+            //try
+            //{
+            //    //Filtering with today date
+            //    var today_event = db.TblPreUpcomingEvent.Where(a => a.Active == true).ToList();
+            //    var today_league = db.TblConfirmLeague.Where(a => a.Active == true).ToList();
 
-                        decimal dec_overOdds = 0;
-                        decimal dec_underOdds = 0;
-                        string goalsHandicap = "0";
-                        if (data2.results[0].asian_lines != null)
-                        {
-                            decimal decHd = Decimal.Parse(data2.results[0].FI);
-                            decimal dec_home_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[0].odds);
-                            decimal dec_away_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[1].odds);
-                            if (data2.results[0].asian_lines.sp.goal_line != null)
-                            {
-                                dec_overOdds = Decimal.Parse(data2.results[0].asian_lines.sp.goal_line.odds[0].odds);
-                                dec_underOdds = Decimal.Parse(data2.results[0].asian_lines.sp.goal_line.odds[1].odds);
-                                goalsHandicap = data2.results[0].asian_lines.sp.goal_line.odds[0].name;
-                            }
-                            var value_h = data2.results[0].asian_lines.sp.asian_handicap.odds[0].name;
-                            var value = data2.results[0].asian_lines.sp.asian_handicap.odds[1].name;
-                            //Check class name of api whether it is name or handicap
-                            if (value == null && value_h == null)
-                            {
-                                value_h = data5.results[0].asian_lines.sp.asian_handicap.odds[0].handicap;
-                                value = data5.results[0].asian_lines.sp.asian_handicap.odds[1].handicap;
-                            }
-                            if (goalsHandicap == null)
-                            {
-                                goalsHandicap = data2.results[0].asian_lines.sp.goal_line.odds[0].handicap;
-                            }
 
-                            //Update database  
-                            var id = db.TblHandicap.Where(a => a.RapidEventId == decHd).FirstOrDefault().HandicapId;
-                            var handicap = db.TblHandicap.FirstOrDefault(s => s.HandicapId.Equals(id));
-                            handicap.RapidEventId = decHd;
-                            handicap.HomeOdd = dec_home_odds;
-                            handicap.HomeHandicap = value_h;
-                            handicap.AwayOdd = dec_away_odds;
-                            handicap.AwayHandicap = value;
-                            handicap.OverOdd = dec_overOdds;
-                            handicap.UnderOdd = dec_underOdds;
-                            handicap.GoalHandicap = goalsHandicap;
-                            //handicap.EventDatetime = dtDateTime;
-                            db.SaveChanges();
-                        }//end of save database
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex.Message);
-            }
+            //    //var today_event = db.TblPreUpcomingEvent.Where(a=>a.Active==true)
+            //    //                                        .GroupBy(item => item.LeagueId)
+            //    //                     .Select(group => group.Key, group.ToList())
+            //    //                     .ToList()
+            //    if (eventId.Count != 0)
+            //    {
+            //        foreach (var lgItem in today_league)
+            //        {
+
+            //                string date = DateTime.Now.Day.ToString();
+            //                //Calling data from RapidApI 
+            //                //var client = new RestClient("https://betsapi2.p.rapidapi.com/v1/bet365/upcoming?sport_id=1&day=" + date);
+            //                //var request = new RestRequest(Method.GET);
+            //                //request.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
+            //                //request.AddHeader("x-rapidapi-host", "betsapi2.p.rapidapi.com");
+            //                //IRestResponse response = client.Execute(request);
+            //                //Football data = JsonConvert.DeserializeObject<Football>(response.Content);
+            //                var client = new RestClient("https://betsapi2.p.rapidapi.com/v1/bet365/upcoming?sport_id=1&league_id=10041110&day=20210111");
+            //                var request = new RestRequest(Method.GET);
+            //                request.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
+            //                request.AddHeader("x-rapidapi-host", "betsapi2.p.rapidapi.com");
+            //                IRestResponse response = client.Execute(request);
+            //                Football main_data = JsonConvert.DeserializeObject<Football>(response.Content);
+
+            //                //Get eventId of first array result
+            //                var eventId = main_data.results[0].id;
+
+            //                //Get total result from api data and calculate page
+            //                var total = main_data.pager.total;
+            //                int data_page = total / 50;
+            //                if (total % 50 != 0)
+            //                {
+            //                    data_page += 1;
+            //                }
+
+            //                for (var page = 1; page <= data_page; page++)
+            //                {
+            //                    //Calling event data from RapidApI 
+            //                    var client1 = new RestClient("https://betsapi2.p.rapidapi.com/v1/bet365/upcoming?sport_id=1&day=" + date + "&page=" + page);
+            //                    var request1 = new RestRequest(Method.GET);
+            //                    request1.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
+            //                    request1.AddHeader("x-rapidapi-host", "betsapi2.p.rapidapi.com");
+            //                    IRestResponse response1 = client1.Execute(request1);
+            //                    Football main_data1 = JsonConvert.DeserializeObject<Football>(response1.Content);
+
+            //                    for (var ii = 0; ii < main_data1.results.Length; ii++)
+            //                    {
+
+            //                            //Fetch  Odds data from RapidApI 
+            //                            eventId = main_data1.results[ii].id;
+            //                            var resultString = String.Concat("https://betsapi2.p.rapidapi.com/v3/bet365/prematch?FI=", eventId);
+            //                            var client2 = new RestClient(resultString);
+            //                            var request2 = new RestRequest(Method.GET);
+            //                            request2.AddHeader("x-rapidapi-key", "4344a0e9c3mshdcf753076fef263p11670fjsne4f7ed9cd500");
+            //                            request2.AddHeader("x-rapidapi-host", "betsapi2.p.rapidapi.com");
+            //                            IRestResponse response2 = client2.Execute(request2);
+            //                            Odds odd_data= JsonConvert.DeserializeObject<Odds>(response2.Content);
+            //                            Handicap hadicap_data = JsonConvert.DeserializeObject<Handicap>(response2.Content);
+
+
+            //                    //----------------------------------------------------------Adding Upcoming Event table---------------------------------------------
+            //                    var lgId = Decimal.Parse(data1.results[ii].league.id);
+            //                    //Change timestamp to local time
+            //                    DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
+            //                            var time_stamp = Convert.ToDouble(main_data.results[ii].time);
+            //                            dtDateTime = dtDateTime.AddSeconds(time_stamp).ToLocalTime();
+            //                            DateTime dtDateTimeNew = dtDateTime.AddHours(6).AddMinutes(30);
+            //                            var shortdate = dtDateTimeNew.ToShortDateString();
+            //                            var shorttime = dtDateTimeNew.ToShortTimeString();
+
+            //                            TblUpcomingEvent up = new TblUpcomingEvent();
+            //                            decimal decUp = Decimal.Parse(main_data.results[ii].id);
+            //                            var up_home = db.TblFootballTeam.Where(a => a.RapidTeamId == decHome && a.LeagueId == ft_lgId)
+            //                                                            .FirstOrDefault().FootballTeamId;
+            //                            var up_away = db.TblFootballTeam.Where(a => a.RapidTeamId == decAway && a.LeagueId == ft_lgId)
+            //                                                            .FirstOrDefault().FootballTeamId;
+            //                            //Filter eventId
+            //                            var upValue = db.TblUpcomingEvent.Any(a => a.RapidEventId == decUp);
+            //                            if (upValue == true)
+            //                            {
+            //                                //Update if data exist 
+            //                                var id = db.TblUpcomingEvent.Where(a => a.RapidEventId == decUp).FirstOrDefault().UpcomingEventId;
+            //                                var upcoming = db.TblUpcomingEvent.FirstOrDefault(s => s.UpcomingEventId.Equals(id));
+            //                                upcoming.RapidEventId = decUp;
+            //                                upcoming.LeagueId = ft_lgId;
+            //                                upcoming.HomeTeamId = up_home;
+            //                                upcoming.AwayTeamId = up_away;
+            //                                upcoming.Active = false;
+            //                                upcoming.EventDate = DateTime.Parse(shortdate);
+            //                                upcoming.EventTime = dtDateTime;
+            //                                db.SaveChanges();
+            //                            }
+            //                            else
+            //                            {
+            //                                //Insert if data not exist
+            //                                up.RapidEventId = decUp;
+            //                                up.LeagueId = ft_lgId;
+            //                                up.HomeTeamId = up_home;
+            //                                up.AwayTeamId = up_away;
+            //                                up.Active = false;
+            //                                up.EventDate = DateTime.Parse(shortdate);
+            //                                up.EventTime = dtDateTime;
+            //                                db.TblUpcomingEvent.Add(up);
+            //                                db.SaveChanges();
+            //                            }
+            //                        }
+            //        }
+                        
+            //                        //--------------------------------------------------------Adding handicap table--------------------------------------------------
+            //                        decimal dec_overOdds = 0;
+            //                        decimal dec_underOdds = 0;
+            //                        string goalsHandicap = "0";
+            //                        if (data2.results[0].asian_lines.sp.asian_handicap != null)
+            //                        {
+            //                            decimal decHd = Decimal.Parse(data2.results[0].FI);
+            //                            decimal dec_home_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[0].odds);
+            //                            decimal dec_away_odds = Decimal.Parse(data2.results[0].asian_lines.sp.asian_handicap.odds[1].odds);
+            //                            if (data2.results[0].asian_lines.sp.goal_line != null)
+            //                            {
+            //                                dec_overOdds = Decimal.Parse(data2.results[0].asian_lines.sp.goal_line.odds[0].odds);
+            //                                dec_underOdds = Decimal.Parse(data2.results[0].asian_lines.sp.goal_line.odds[1].odds);
+            //                                goalsHandicap = data2.results[0].asian_lines.sp.goal_line.odds[0].name;
+            //                            }
+            //                            var value_h = data2.results[0].asian_lines.sp.asian_handicap.odds[0].name;
+            //                            var value = data2.results[0].asian_lines.sp.asian_handicap.odds[1].name;
+            //                            //Check class name of api whether it is name or handicap
+            //                            if (value == null && value_h == null)
+            //                            {
+            //                                value_h = data5.results[0].asian_lines.sp.asian_handicap.odds[0].handicap;
+            //                                value = data5.results[0].asian_lines.sp.asian_handicap.odds[1].handicap;
+            //                            }
+            //                            if (goalsHandicap == null)
+            //                            {
+            //                                goalsHandicap = data2.results[0].asian_lines.sp.goal_line.odds[0].handicap;
+            //                            }
+
+            //                            //Filter eventId
+            //                            var hanValue = db.TblHandicap.ToList().Any(a => a.RapidEventId == decHd);
+            //                            if (hanValue == true)
+            //                            {
+            //                                //Update if data exist 
+            //                                var id = db.TblHandicap.Where(a => a.RapidEventId == decHd).FirstOrDefault().HandicapId;
+            //                                var handicap = db.TblHandicap.FirstOrDefault(s => s.HandicapId.Equals(id));
+            //                                handicap.RapidEventId = decHd;
+            //                                handicap.HomeOdd = dec_home_odds;
+            //                                handicap.HomeHandicap = value_h;
+            //                                handicap.AwayOdd = dec_away_odds;
+            //                                handicap.AwayHandicap = value;
+            //                                handicap.OverOdd = dec_overOdds;
+            //                                handicap.UnderOdd = dec_underOdds;
+            //                                handicap.GoalHandicap = goalsHandicap;
+            //                                handicap.EventDatetime = dtDateTime;
+            //                                db.SaveChanges();
+            //                            }
+            //                            else
+            //                            {
+            //                                TblHandicap hd = new TblHandicap
+            //                                {
+            //                                    RapidEventId = decHd,
+            //                                    HomeOdd = dec_home_odds,
+            //                                    HomeHandicap = value_h,
+            //                                    AwayOdd = dec_away_odds,
+            //                                    AwayHandicap = value,
+            //                                    EventDatetime = dtDateTime,
+            //                                    OverOdd = dec_overOdds,
+            //                                    UnderOdd = dec_underOdds,
+            //                                    GoalHandicap = goalsHandicap
+            //                                };
+            //                                db.TblHandicap.Add(hd);
+            //                                db.SaveChanges();
+            //                            }//end of save database
+            //                        }//end of check asian line data is null
+            //                         //Console.WriteLine("Completed Data Result");
+            //                    }//end of filter UCL
+            //                     // Console.WriteLine("Completed Data" + ii + "Result");
+            //                }//end of fetch one data
+            //                 //Console.WriteLine("Completed Page" + page + "Result");
+            //            }//end of page
+            //        }
+            //        catch (Exception ex)
+            //        {
+            //            Console.WriteLine(ex.Message);
+            //        }
+            //    }
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine(ex.Message);
+            //}
         }
 
         //-----------------------------------------------------------Call Back Methods-------------------
@@ -1323,5 +1448,6 @@ namespace Background_Task_Api_Pulling.Controllers
             db.SaveChanges();
             return result;
         }
+
     }
 }
