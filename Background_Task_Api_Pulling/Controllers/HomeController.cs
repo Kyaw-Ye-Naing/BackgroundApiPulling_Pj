@@ -30,13 +30,16 @@ namespace Background_Task_Api_Pulling.Controllers
             RecurringJob.AddOrUpdate(() => GetGoals(), Cron.Hourly);
             RecurringJob.AddOrUpdate(() => MixCalculation(), Cron.Hourly);
             RecurringJob.AddOrUpdate(() => GetData(), "0 */6 * * *");
+            RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), "*/30 * * * *");
+            RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), "*/30 * * * *");
+            RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), "*/30 * * * *");
 
             //BackgroundJob.Schedule(() => PublishMessage(), TimeSpan.FromMilliseconds(2000));
             // RecurringJob.AddOrUpdate(() => Test1(), "*/15 * * * *");
             //RecurringJob.AddOrUpdate(()=>UpdateHandicapFromPre(),Cron.Minutely);
-            RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Hourly);
-            RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Hourly);
-            RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Hourly);
+            // RecurringJob.AddOrUpdate(() => CalculateHomeHandicap(), Cron.Hourly);
+            // RecurringJob.AddOrUpdate(() => CalculateAwayHandicap(), Cron.Hourly);
+            //RecurringJob.AddOrUpdate(() => CalculateZeroHandicap(), Cron.Hourly);
             return View();
         }
 
@@ -482,7 +485,7 @@ namespace Background_Task_Api_Pulling.Controllers
                             idResult.PreUpcomingEventId = s.preEventId;
                             db.SaveChanges();
                         }//end of save
-                       // Console.WriteLine("Complete 1 result from   ZERO  ");
+                         // Console.WriteLine("Complete 1 result from   ZERO  ");
                     }//end of foreach loop
                 }
             }
@@ -530,7 +533,7 @@ namespace Background_Task_Api_Pulling.Controllers
                         goalResult.EventDatetime = dt;
                         db.TblGoalResult.Add(goalResult);
                         db.SaveChanges();
-                        //  BodyCalculation(Convert.ToInt32(golArr[0]), Convert.ToInt32(golArr[1]), (decimal)c.RapidEventId);
+                        BodyCalculation(Convert.ToInt32(golArr[0]), Convert.ToInt32(golArr[1]), (decimal)c.RapidEventId);
                         // Console.WriteLine("Complete 1 Body");
                     }
                     else if (status == 4 || status == 5)
@@ -544,10 +547,10 @@ namespace Background_Task_Api_Pulling.Controllers
                         goalResult.EventDatetime = dt;
                         db.TblGoalResult.Add(goalResult);
                         db.SaveChanges();
-                        // BodyCalculation(-1, -1, (decimal)c.RapidEventId);
+                        BodyCalculation(-1, -1, (decimal)c.RapidEventId);
                         //Console.WriteLine("Complete 1 Body");
                     }
-                }        
+                }
             }//end of foreach loop
             //return View();
         }
@@ -557,7 +560,11 @@ namespace Background_Task_Api_Pulling.Controllers
         {
             try
             {
-                string date = DateTime.Now.Day.ToString();
+                DateTime moment = DateTime.Now.AddHours(6).AddMinutes(30);
+                string y = moment.Year.ToString();
+                string m = moment.Month.ToString("d2");
+                string d = moment.Day.ToString("d2");
+                string date = y + m + d;
                 //Calling data from RapidApI 
                 var client = new RestClient("https://betsapi2.p.rapidapi.com/v1/bet365/upcoming?sport_id=1&day=" + date);
                 var request = new RestRequest(Method.GET);
@@ -591,19 +598,20 @@ namespace Background_Task_Api_Pulling.Controllers
                     {
                         var lastName = "";
                         var dd = data1.results[ii].league.name;
+                        var status = Convert.ToInt32(data1.results[ii].ss);
 
                         if (dd != null && dd != "")
                         {
                             var tmpArr = dd.Split(" ");
                             lastName = tmpArr[tmpArr.Count() - 1];
                         }
-                        if (lastName.Equals("play"))
+                        if (lastName.Equals("play") || status != 0)
                         {
-                           // Console.WriteLine("This is Esports data");
+                            // Console.WriteLine("This is Esports data");
                         }
                         //if (dd.Equals("England Premier League") || dd.Equals("England Championship") || dd.Equals("Germany Bundesliga I") ||
                         //   dd.Equals("Italy Serie A") || dd.Equals("France Ligue 2"))   dd.Equals("Spain Primera Liga")
-                        //if (dd.Equals("England Premier League"))
+                        // if (dd.Equals("Spain Primera Liga") || dd.Equals("England Championship"))
                         else
                         {
                             //Fetch  Odds data from RapidApI 
@@ -664,7 +672,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                 db.TblFootballTeam.Add(home_ft);
                                 db.SaveChanges();
                             }
-                            //----------------------------------------------------------Adding Upcoming Event table---------------------------------------------
+                            //----------------------------------------------------------Adding Upcomming Event table---------------------------------------------
                             //Change timestamp to local time
                             DateTime dtDateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0, System.DateTimeKind.Utc);
                             var time_stamp = Convert.ToDouble(data1.results[ii].time);
@@ -692,7 +700,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                 upcoming.AwayTeamId = up_away;
                                 upcoming.Active = false;
                                 upcoming.EventDate = DateTime.Parse(shortdate);
-                                upcoming.EventTime = dtDateTime;
+                                upcoming.EventTime = dtDateTimeNew;
                                 db.SaveChanges();
                             }
                             else
@@ -704,7 +712,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                 up.AwayTeamId = up_away;
                                 up.Active = false;
                                 up.EventDate = DateTime.Parse(shortdate);
-                                up.EventTime = dtDateTime;
+                                up.EventTime = dtDateTimeNew;
                                 db.TblUpcomingEvent.Add(up);
                                 db.SaveChanges();
                             }
@@ -751,7 +759,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                     handicap.OverOdd = dec_overOdds;
                                     handicap.UnderOdd = dec_underOdds;
                                     handicap.GoalHandicap = goalsHandicap;
-                                    handicap.EventDatetime = dtDateTime;
+                                    handicap.EventDatetime = dtDateTimeNew;
                                     db.SaveChanges();
                                 }
                                 else
@@ -763,7 +771,7 @@ namespace Background_Task_Api_Pulling.Controllers
                                         HomeHandicap = value_h,
                                         AwayOdd = dec_away_odds,
                                         AwayHandicap = value,
-                                        EventDatetime = dtDateTime,
+                                        EventDatetime = dtDateTimeNew,
                                         OverOdd = dec_overOdds,
                                         UnderOdd = dec_underOdds,
                                         GoalHandicap = goalsHandicap
@@ -776,13 +784,14 @@ namespace Background_Task_Api_Pulling.Controllers
                         }//end of filter UCL
                          // Console.WriteLine("Completed Data" + ii + "Result");
                     }//end of fetch one data
-                       //Console.WriteLine("Completed Page" + page + "Result");
+                     //Console.WriteLine("Completed Page" + page + "Result");
                 }//end of page
             }
             catch (Exception ex)
             {
                 Console.WriteLine(ex.Message);
             }
+            //return View();
         }
 
         // Calculation Mix Handicap From Users
@@ -795,7 +804,7 @@ namespace Background_Task_Api_Pulling.Controllers
             var result = (from g in db.TblGambling
                           join d in db.TblGamblingDetails
                           on g.GamblingId equals d.GamblingId
-                          where g.Active == true  && g.GamblingTypeId == 2 
+                          where g.Active == true && g.GamblingTypeId == 2
                           select new BetInfo
                           {
                               BetGambling = g.GamblingId,
@@ -850,13 +859,13 @@ namespace Background_Task_Api_Pulling.Controllers
                                     Overs = r.BetOver,
                                     Under = r.BetUnder,
                                     HomeResult = h_goal,
-                                    AwayResult =a_goal,
+                                    AwayResult = a_goal,
                                     IsHome = r.BetIsHome,
                                     IsHomeBodyOdds = r.BetIsHomeOdds,
                                     RapidEventId = r.BetRapid,
                                     GamblingId = r.BetGambling,
                                     FootballTeamId = r.BetTeam
-                                }); 
+                                });
                             }
                             else
                             {
@@ -885,10 +894,10 @@ namespace Background_Task_Api_Pulling.Controllers
                 {
                     StringConcat @string = new StringConcat();
                     Betting bettingCal = new Betting();
-                  //  var userrole = users.Where(a => a.UserId == data.User).FirstOrDefault().RoleId;
-                  //  string no = "GW" + data.User + userrole + DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString()
-                              // + DateTime.Now.Day.ToString() + DateTime.Now.Hour.ToString() + DateTime.Now.Minute.ToString()
-                             //  + DateTime.Now.Second.ToString();
+                    //  var userrole = users.Where(a => a.UserId == data.User).FirstOrDefault().RoleId;
+                    //  string no = "GW" + data.User + userrole + DateTime.Now.Year.ToString() + DateTime.Now.Month.ToString()
+                    // + DateTime.Now.Day.ToString() + DateTime.Now.Hour.ToString() + DateTime.Now.Minute.ToString()
+                    //  + DateTime.Now.Second.ToString();
 
                     int goalUnitInt = 0;
                     decimal unit = 0;
@@ -1107,7 +1116,7 @@ namespace Background_Task_Api_Pulling.Controllers
             //                            }
             //                        }
             //        }
-                        
+
             //                        //--------------------------------------------------------Adding handicap table--------------------------------------------------
             //                        decimal dec_overOdds = 0;
             //                        decimal dec_underOdds = 0;
@@ -1321,7 +1330,7 @@ namespace Background_Task_Api_Pulling.Controllers
             List<TblGambling> tblGamblings = new List<TblGambling>();
             users = db.TblUser.ToList();
             tblGamblings = db.TblGambling.Where(a => a.Active == true).ToList();
-            DateTime today= DateTime.Now.AddHours(6).AddMinutes(30);
+            DateTime today = DateTime.Now.AddHours(6).AddMinutes(30);
             var userrole = users.Where(a => a.UserId == uid).FirstOrDefault().RoleId;
             string no = "GW" + uid + userrole + today.Year.ToString() + today.Month.ToString()
                         + today.Day.ToString() + today.Hour.ToString() + today.Minute.ToString()
@@ -1402,7 +1411,7 @@ namespace Background_Task_Api_Pulling.Controllers
         }
 
         //Save Method For Event is PostPoned or Cancelled
-        public bool SavePostponedFunc(decimal og,decimal gid, decimal uid)
+        public bool SavePostponedFunc(decimal og, decimal gid, decimal uid)
         {
             bool result = false;
             List<TblUser> users = new List<TblUser>();
@@ -1414,7 +1423,7 @@ namespace Background_Task_Api_Pulling.Controllers
             string no = "GW" + uid + userrole + today.Year.ToString() + today.Month.ToString()
                         + today.Day.ToString() + today.Hour.ToString() + today.Minute.ToString()
                         + today.Second.ToString();
-           
+
             TblUserPosting userPosting = new TblUserPosting();
             TblUserPosting userPosting_parent = new TblUserPosting();
 
